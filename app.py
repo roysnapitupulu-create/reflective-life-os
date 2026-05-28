@@ -1,11 +1,18 @@
-from datetime import date, datetime
+from datetime import date
 import os
 
 import pandas as pd
 import streamlit as st
 
-from db import get_entries, init_db, insert_entry
+from db import ensure_user_profile, get_entries, init_db, insert_entry, update_user_activity
 from emotion_engine import extract_entry_emotions
+from identity_engine import (
+    generate_user_id,
+    is_trusted_session_valid,
+    make_trust_signature,
+    trusted_until_iso,
+    utc_now_iso,
+)
 from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
@@ -467,6 +474,24 @@ st.markdown(
 init_db()
 
 
+def get_query_param(name: str) -> str:
+    try:
+        value = st.query_params.get(name, "")
+    except Exception:
+        value = ""
+
+    if isinstance(value, list):
+        return str(value[0]) if value else ""
+    return str(value or "")
+
+
+def set_query_param(name: str, value: str) -> None:
+    try:
+        st.query_params[name] = value
+    except Exception:
+        pass
+
+
 def get_access_code() -> str:
     env_code = os.getenv("ACCESS_CODE", "").strip()
     if env_code:
@@ -480,11 +505,28 @@ def get_access_code() -> str:
 
 def require_access_code() -> None:
     expected_code = get_access_code()
+    existing_user_id = get_query_param("rid")
+    trusted_until = get_query_param("trusted_until")
+    trust_sig = get_query_param("trust_sig")
+
+    if is_trusted_session_valid(existing_user_id, trusted_until, trust_sig, expected_code):
+        st.session_state["access_granted"] = True
+        st.session_state["user_id"] = existing_user_id
+        return
+
     if not expected_code:
         st.sidebar.caption("Access code belum dikonfigurasi.")
+        if not st.session_state.get("user_id"):
+            user_id = existing_user_id or generate_user_id()
+            st.session_state["user_id"] = user_id
+            set_query_param("rid", user_id)
         return
 
     if st.session_state.get("access_granted"):
+        if not st.session_state.get("user_id"):
+            user_id = existing_user_id or generate_user_id()
+            st.session_state["user_id"] = user_id
+            set_query_param("rid", user_id)
         return
 
     st.markdown("### Masukkan kode akses early adopter.")
@@ -496,7 +538,13 @@ def require_access_code() -> None:
 
     if submitted:
         if entered_code.strip() == expected_code:
+            user_id = existing_user_id or generate_user_id()
+            next_trusted_until = trusted_until_iso()
             st.session_state["access_granted"] = True
+            st.session_state["user_id"] = user_id
+            set_query_param("rid", user_id)
+            set_query_param("trusted_until", next_trusted_until)
+            set_query_param("trust_sig", make_trust_signature(user_id, next_trusted_until, expected_code))
             st.rerun()
         else:
             st.error("Kode belum cocok.")
@@ -521,8 +569,11 @@ def make_entry(
     personal_reflection: str,
     gratitude_note: str,
     improvement_action: str,
+    user_id: str,
 ) -> dict:
+    now = utc_now_iso()
     return {
+        "user_id": user_id,
         "entry_date": entry_date.isoformat(),
         "activity": activity.strip(),
         "life_area": life_area,
@@ -535,7 +586,8 @@ def make_entry(
         "personal_reflection": personal_reflection.strip(),
         "gratitude_note": gratitude_note.strip(),
         "improvement_action": improvement_action.strip(),
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": now,
+        "updated_at": now,
     }
 
 
@@ -585,7 +637,14 @@ def show_feedback_section() -> None:
         st.caption("Untuk versi awal ini, feedback belum disimpan otomatis.")
 
 
-def show_input_page(reflection_style: str, entries: list[dict]) -> None:
+def show_onboarding_note(entries: list[dict]) -> None:
+    if entries:
+        st.caption("Catatanmu bersifat personal. Ruang ini hanya menampilkan perjalananmu.")
+    else:
+        st.caption("Ruang ini akan perlahan mengenali ritme dan refleksimu.")
+
+
+def show_input_page(reflection_style: str, entries: list[dict], user_id: str) -> None:
     st.title("Ruang Menulis")
     st.caption("Tidak perlu rapi. Cukup mulai dari bagian yang paling jujur.")
 
@@ -605,12 +664,12 @@ def show_input_page(reflection_style: str, entries: list[dict]) -> None:
         )
 
     if mode == "Quick Reflection":
-        show_quick_reflection_form(entries)
+        show_quick_reflection_form(entries, user_id)
     else:
-        show_full_journal_form(reflection_style, entries)
+        show_full_journal_form(reflection_style, entries, user_id)
 
 
-def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
+def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: str) -> None:
     with st.form("daily_journal_form", clear_on_submit=True):
         st.markdown(
             '<div class="journey-section-title">Awal catatan</div>'
@@ -714,6 +773,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
             personal_reflection,
             gratitude_note,
             improvement_action,
+            user_id,
         )
         save_entry(entry)
         updated_entries = [entry] + entries
@@ -728,7 +788,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
             st.write(generate_reflection(entry, reflection_style))
 
 
-def show_quick_reflection_form(entries: list[dict]) -> None:
+def show_quick_reflection_form(entries: list[dict], user_id: str) -> None:
     with st.form("quick_reflection_form", clear_on_submit=True):
         st.markdown(
             '<div class="journey-section-title">Catatan cepat</div>'
@@ -770,6 +830,7 @@ def show_quick_reflection_form(entries: list[dict]) -> None:
             one_sentence,
             gratitude_note,
             "",
+            user_id,
         )
         save_entry(entry)
         updated_entries = [entry] + entries
@@ -785,7 +846,7 @@ def show_history_page() -> None:
     st.title("Jejak Catatan")
     st.caption("Beberapa hal memang baru terlihat setelah diberi jarak.")
 
-    entries = get_entries()
+    entries = get_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada yang ditulis. Tidak perlu buru-buru.")
         return
@@ -820,7 +881,7 @@ def show_history_page() -> None:
 def show_today_insight_page(reflection_style: str) -> None:
     st.title("Hari Ini")
 
-    entries = get_entries()
+    entries = get_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada catatan untuk dibaca hari ini. Ruangnya tetap ada.")
         return
@@ -852,7 +913,7 @@ def show_weekly_reflection_page(reflection_style: str) -> None:
     st.title("Refleksi Mingguan")
     st.caption("Bukan penilaian. Hanya melihat beberapa hari terakhir dengan sedikit jarak.")
 
-    entries = get_entries()
+    entries = get_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada cukup cerita untuk dirangkum. Mulai dari satu catatan kecil saja.")
         return
@@ -896,11 +957,14 @@ def show_weekly_reflection_page(reflection_style: str) -> None:
 
 require_access_code()
 
-entries_at_start = get_entries()
+current_user_id = st.session_state["user_id"]
+ensure_user_profile(current_user_id, utc_now_iso())
+entries_at_start = get_entries(current_user_id)
 
 st.sidebar.title("Reflective Life OS")
 st.sidebar.markdown('<div class="beta-label">Early Reflective Beta</div>', unsafe_allow_html=True)
 reflection_style = st.sidebar.selectbox("Reflection Style", REFLECTION_STYLES)
+update_user_activity(current_user_id, utc_now_iso(), reflection_style)
 page = st.sidebar.radio(
     "Navigasi",
     ["Input Harian", "History", "Insight Hari Ini", "Weekly Reflection"],
@@ -908,9 +972,10 @@ page = st.sidebar.radio(
 show_feedback_section()
 
 show_welcome(entries_at_start)
+show_onboarding_note(entries_at_start)
 
 if page == "Input Harian":
-    show_input_page(reflection_style, entries_at_start)
+    show_input_page(reflection_style, entries_at_start, current_user_id)
 elif page == "History":
     show_history_page()
 elif page == "Insight Hari Ini":
