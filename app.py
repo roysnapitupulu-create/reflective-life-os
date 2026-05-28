@@ -18,6 +18,7 @@ from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
 from response_engine import generate_submit_response
+from storage_supabase import CloudStorageError, is_supabase_enabled, load_journal_entries, save_journal_entry
 from time_utils import format_human_time
 from ui_components import render_entry_card
 from welcome_engine import generate_welcome
@@ -667,7 +668,26 @@ def make_entry(
 
 
 def save_entry(entry: dict) -> None:
+    if is_supabase_enabled():
+        try:
+            save_journal_entry(entry)
+            return
+        except CloudStorageError:
+            st.error("Storage cloud belum bisa diakses.")
+            st.stop()
+
     insert_entry(**entry)
+
+
+def load_entries(user_id: str, limit: int = 100) -> list[dict]:
+    if is_supabase_enabled():
+        try:
+            return load_journal_entries(user_id, limit=limit)
+        except CloudStorageError:
+            st.error("Storage cloud belum bisa diakses.")
+            return []
+
+    return get_entries(user_id)
 
 
 def enrich_entry_with_meaning(entry: dict, recent_entries: list[dict], reflection_style: str) -> dict:
@@ -958,7 +978,7 @@ def show_history_page() -> None:
     st.title("Jejak Catatan")
     st.caption("Beberapa hal memang baru terlihat setelah diberi jarak.")
 
-    entries = get_entries(st.session_state["user_id"])
+    entries = load_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada jejak tulisan di sini. Kadang satu kalimat jujur sudah cukup untuk memulai.")
         return
@@ -995,7 +1015,7 @@ def show_history_page() -> None:
 def show_today_insight_page(reflection_style: str) -> None:
     st.title("Hari Ini")
 
-    entries = get_entries(st.session_state["user_id"])
+    entries = load_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada catatan untuk dibaca hari ini. Ruangnya tetap ada.")
         return
@@ -1030,7 +1050,7 @@ def show_weekly_reflection_page(reflection_style: str) -> None:
     st.title("Cermin Mingguan")
     st.caption("Bukan laporan. Hanya cara pelan untuk melihat minggu ini dengan sedikit jarak.")
 
-    entries = get_entries(st.session_state["user_id"])
+    entries = load_entries(st.session_state["user_id"])
     if not entries:
         st.info("Belum ada cukup cerita untuk dipantulkan. Mulai dari satu kalimat jujur saja.")
         return
@@ -1086,7 +1106,7 @@ require_access_code()
 
 current_user_id = st.session_state["user_id"]
 ensure_user_profile(current_user_id, utc_now_iso())
-entries_at_start = get_entries(current_user_id)
+entries_at_start = load_entries(current_user_id)
 
 st.sidebar.title("Reflective Life OS")
 st.sidebar.markdown('<div class="beta-label">Early Reflective Beta</div>', unsafe_allow_html=True)
