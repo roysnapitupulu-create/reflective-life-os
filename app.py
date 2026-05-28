@@ -7,10 +7,9 @@ import streamlit as st
 from db import ensure_user_profile, get_entries, init_db, insert_entry, update_user_activity
 from emotion_engine import extract_entry_emotions
 from identity_engine import (
-    generate_user_id,
-    is_trusted_session_valid,
-    make_trust_signature,
-    trusted_until_iso,
+    get_current_user_context,
+    get_or_create_user_id,
+    mark_access_trusted,
     utc_now_iso,
 )
 from memory_engine import detect_unfinished_thread
@@ -474,24 +473,6 @@ st.markdown(
 init_db()
 
 
-def get_query_param(name: str) -> str:
-    try:
-        value = st.query_params.get(name, "")
-    except Exception:
-        value = ""
-
-    if isinstance(value, list):
-        return str(value[0]) if value else ""
-    return str(value or "")
-
-
-def set_query_param(name: str, value: str) -> None:
-    try:
-        st.query_params[name] = value
-    except Exception:
-        pass
-
-
 def get_access_code() -> str:
     env_code = os.getenv("ACCESS_CODE", "").strip()
     if env_code:
@@ -505,28 +486,24 @@ def get_access_code() -> str:
 
 def require_access_code() -> None:
     expected_code = get_access_code()
-    existing_user_id = get_query_param("rid")
-    trusted_until = get_query_param("trusted_until")
-    trust_sig = get_query_param("trust_sig")
+    user_context = get_current_user_context(st, expected_code)
 
-    if is_trusted_session_valid(existing_user_id, trusted_until, trust_sig, expected_code):
-        st.session_state["access_granted"] = True
-        st.session_state["user_id"] = existing_user_id
-        return
+    if not user_context["storage_ready"]:
+        st.info("Menyiapkan ruang refleksimu...")
+        st.stop()
 
     if not expected_code:
         st.sidebar.caption("Access code belum dikonfigurasi.")
-        if not st.session_state.get("user_id"):
-            user_id = existing_user_id or generate_user_id()
-            st.session_state["user_id"] = user_id
-            set_query_param("rid", user_id)
+        if user_context["user_id"]:
+            st.session_state["user_id"] = user_context["user_id"]
         return
 
-    if st.session_state.get("access_granted"):
-        if not st.session_state.get("user_id"):
-            user_id = existing_user_id or generate_user_id()
-            st.session_state["user_id"] = user_id
-            set_query_param("rid", user_id)
+    if user_context["access_trusted"]:
+        st.session_state["user_id"] = user_context["user_id"]
+        return
+
+    if st.session_state.get("access_granted") and st.session_state.get("user_id"):
+        mark_access_trusted(st, st.session_state["user_id"], expected_code)
         return
 
     st.markdown("### Masukkan kode akses early adopter.")
@@ -538,13 +515,10 @@ def require_access_code() -> None:
 
     if submitted:
         if entered_code.strip() == expected_code:
-            user_id = existing_user_id or generate_user_id()
-            next_trusted_until = trusted_until_iso()
-            st.session_state["access_granted"] = True
-            st.session_state["user_id"] = user_id
-            set_query_param("rid", user_id)
-            set_query_param("trusted_until", next_trusted_until)
-            set_query_param("trust_sig", make_trust_signature(user_id, next_trusted_until, expected_code))
+            user_id = user_context["user_id"]
+            if not user_id:
+                user_id, _ = get_or_create_user_id(st)
+            mark_access_trusted(st, user_id, expected_code)
             st.rerun()
         else:
             st.error("Kode belum cocok.")
