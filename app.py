@@ -48,16 +48,19 @@ st.markdown(
         }
     }
     .stApp {
-        background: #2c2722;
+        background:
+            radial-gradient(circle at 18% 0%, rgba(180, 122, 61, 0.2), transparent 34%),
+            radial-gradient(circle at 88% 12%, rgba(233, 190, 128, 0.12), transparent 28%),
+            linear-gradient(180deg, #2b241f 0%, #201b18 58%, #181513 100%);
         color: #f0e7dc;
     }
     section[data-testid="stSidebar"] {
-        background: #342e28;
-        border-right: 1px solid #4b4036;
+        background: rgba(50, 42, 35, 0.94);
+        border-right: 1px solid rgba(201, 158, 103, 0.16);
     }
     .block-container {
         max-width: 820px;
-        padding-top: 2rem;
+        padding-top: 1.35rem;
         padding-bottom: 4rem;
         animation: softFadeIn 360ms ease-out;
     }
@@ -70,35 +73,42 @@ st.markdown(
         line-height: 1.72;
     }
     div[data-testid="stForm"] {
-        border: 1px solid #5b4f44;
-        border-radius: 8px;
+        border: 1px solid rgba(222, 181, 128, 0.18);
+        border-radius: 18px;
         padding: 1.35rem;
-        background: #332d27;
-        transition: border-color 180ms ease, background 180ms ease;
+        background: rgba(48, 40, 33, 0.78);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        border-color: #584c41;
-        background: #332d27;
+        border-color: rgba(222, 181, 128, 0.18);
+        border-radius: 18px;
+        background: rgba(49, 41, 34, 0.72);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
         transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
     }
     div[data-testid="stVerticalBlockBorderWrapper"]:hover {
-        border-color: #746558;
-        background: #38312a;
+        border-color: rgba(230, 187, 128, 0.34);
+        background: rgba(58, 48, 39, 0.78);
         transform: translateY(-1px);
     }
     .stButton > button, .stFormSubmitButton > button {
-        min-height: 3rem;
-        border-radius: 8px;
-        border-color: #7b6c5d;
-        background: #e1cdb6;
-        color: #2b241f;
-        font-weight: 600;
-        transition: background 160ms ease, transform 160ms ease;
+        min-height: 3.25rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 221, 174, 0.42);
+        background: linear-gradient(135deg, #f0c98e 0%, #c98645 100%);
+        color: #201814;
+        font-weight: 700;
+        letter-spacing: 0;
+        box-shadow: 0 12px 26px rgba(192, 121, 53, 0.22);
+        transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
     }
     .stButton > button:hover, .stFormSubmitButton > button:hover {
-        background: #ead9c4;
-        color: #2b241f;
+        background: linear-gradient(135deg, #f6d7a8 0%, #d49552 100%);
+        color: #201814;
         transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(192, 121, 53, 0.28);
     }
     textarea, input, select {
         border-radius: 8px !important;
@@ -108,9 +118,13 @@ st.markdown(
         line-height: 1.65 !important;
     }
     input, textarea, select {
-        background-color: #3a332c !important;
-        color: #f2e8dc !important;
-        border-color: #625448 !important;
+        background-color: rgba(37, 31, 27, 0.72) !important;
+        color: #f7eadb !important;
+        border-color: rgba(216, 173, 118, 0.2) !important;
+    }
+    textarea:focus, input:focus {
+        border-color: rgba(240, 201, 142, 0.58) !important;
+        box-shadow: 0 0 0 1px rgba(240, 201, 142, 0.16) !important;
     }
     .quiet-note {
         color: #c7b9aa;
@@ -125,12 +139,76 @@ st.markdown(
         margin-bottom: 0.6rem;
     }
     .welcome-space {
-        padding-top: 0.25rem;
-        margin-bottom: 0.75rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(230, 187, 128, 0.18);
+        border-radius: 22px;
+        padding: 1.15rem 1.2rem 1.05rem;
+        margin-bottom: 1rem;
+        background:
+            linear-gradient(135deg, rgba(92, 63, 42, 0.75), rgba(40, 33, 29, 0.82)),
+            radial-gradient(circle at 90% 20%, rgba(240, 201, 142, 0.18), transparent 36%);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(12px);
     }
     .welcome-space h3 {
-        line-height: 1.45;
+        line-height: 1.42;
+        margin-bottom: 0.4rem;
+        max-width: 88%;
+    }
+    .welcome-kicker {
+        color: #e7bf88;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         margin-bottom: 0.45rem;
+    }
+    .welcome-copy {
+        color: #d8c8b6;
+        font-size: 0.96rem;
+        margin-top: 0.25rem;
+        max-width: 34rem;
+    }
+    .cozy-orbit {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background:
+            radial-gradient(circle at 50% 46%, #f1ca8e 0 10%, transparent 11%),
+            linear-gradient(135deg, rgba(240, 201, 142, 0.24), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(240, 201, 142, 0.24);
+        box-shadow: inset 0 0 24px rgba(255, 221, 174, 0.1), 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+    .soft-divider {
+        height: 1px;
+        margin: 1.15rem 0;
+        background: linear-gradient(90deg, transparent, rgba(226, 179, 120, 0.26), transparent);
+    }
+    .journey-section {
+        border: 1px solid rgba(226, 179, 120, 0.16);
+        border-radius: 16px;
+        padding: 1rem;
+        margin: 0.95rem 0;
+        background: rgba(31, 26, 23, 0.34);
+    }
+    .journey-section-title {
+        color: #f3d5a8;
+        font-weight: 700;
+        margin-bottom: 0.1rem;
+    }
+    .journey-section-copy {
+        color: #c8b7a5;
+        font-size: 0.9rem;
+        margin-bottom: 0.85rem;
+    }
+    .mode-helper {
+        color: #c8b7a5;
+        font-size: 0.92rem;
+        margin-top: -0.25rem;
+        margin-bottom: 0.8rem;
     }
     .companion-response {
         border-left: 2px solid #9d856e;
@@ -148,22 +226,35 @@ st.markdown(
         .block-container {
             padding-left: 1.05rem;
             padding-right: 1.05rem;
-            padding-top: max(2.75rem, calc(1.5rem + env(safe-area-inset-top)));
+            padding-top: max(2.35rem, calc(1.35rem + env(safe-area-inset-top)));
             padding-bottom: max(4.5rem, calc(3rem + env(safe-area-inset-bottom)));
         }
         .welcome-space {
-            padding-top: 0.7rem;
-            margin-bottom: 1rem;
+            padding: 1rem 1rem 0.95rem;
+            margin-bottom: 1.15rem;
+            border-radius: 20px;
         }
         .welcome-space h3 {
-            font-size: 1.18rem;
-            line-height: 1.55;
-            margin-bottom: 0.65rem;
+            font-size: 1.08rem;
+            line-height: 1.48;
+            margin-bottom: 0.5rem;
+            max-width: 82%;
+        }
+        .welcome-copy {
+            font-size: 0.9rem;
+            max-width: 100%;
+        }
+        .cozy-orbit {
+            right: 0.75rem;
+            top: 0.85rem;
+            width: 42px;
+            height: 42px;
+            border-radius: 15px;
         }
         h1 {
-            font-size: 1.85rem;
+            font-size: 1.72rem;
             line-height: 1.2;
-            margin-top: 0.35rem;
+            margin-top: 0.25rem;
             margin-bottom: 0.7rem;
         }
         h2, h3 {
@@ -179,11 +270,16 @@ st.markdown(
             font-size: 1rem !important;
         }
         div[data-testid="stForm"] {
-            padding: 1.15rem;
+            padding: 1rem;
             margin-top: 0.35rem;
+            border-radius: 18px;
+        }
+        .journey-section {
+            padding: 0.9rem;
+            margin: 0.85rem 0;
         }
         .stButton > button, .stFormSubmitButton > button {
-            min-height: 3.25rem;
+            min-height: 3.35rem;
             width: 100%;
         }
     }
@@ -273,12 +369,17 @@ def save_entry(entry: dict) -> None:
 
 def show_welcome(entries: list[dict]) -> None:
     st.markdown('<div class="welcome-space">', unsafe_allow_html=True)
+    st.markdown('<div class="cozy-orbit"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="welcome-kicker">Early Reflective Beta</div>', unsafe_allow_html=True)
     st.markdown(f"### {generate_welcome(entries)}")
+    st.markdown(
+        '<div class="welcome-copy">Satu ruang kecil untuk menaruh hari ini, tanpa harus langsung kuat atau selesai.</div>',
+        unsafe_allow_html=True,
+    )
     continuity_prompt = detect_unfinished_thread(entries)
     if continuity_prompt:
         st.markdown(f'<p class="quiet-note">{continuity_prompt}</p>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-    st.divider()
 
 
 def show_pattern_noticing(entries: list[dict], title: str = "Pattern Noticing") -> None:
@@ -310,13 +411,22 @@ def show_feedback_section() -> None:
 
 def show_input_page(reflection_style: str, entries: list[dict]) -> None:
     st.title("Ruang Menulis")
-    st.caption("Tidak perlu rapi. Cukup tulis yang masih tertinggal di dalam diri.")
+    st.caption("Tidak perlu rapi. Cukup mulai dari bagian yang paling jujur.")
 
-    mode = st.radio(
-        "Pilih cara menulis",
-        ["Journal Lengkap", "Quick Reflection"],
-        horizontal=True,
-    )
+    st.markdown('<div class="mode-helper">Pilih ritme menulismu malam ini.</div>', unsafe_allow_html=True)
+    if hasattr(st, "segmented_control"):
+        mode = st.segmented_control(
+            "Pilih cara menulis",
+            ["Journal Lengkap", "Quick Reflection"],
+            default="Journal Lengkap",
+            label_visibility="collapsed",
+        )
+    else:
+        mode = st.radio(
+            "Pilih cara menulis",
+            ["Journal Lengkap", "Quick Reflection"],
+            horizontal=True,
+        )
 
     if mode == "Quick Reflection":
         show_quick_reflection_form(entries)
@@ -326,11 +436,19 @@ def show_input_page(reflection_style: str, entries: list[dict]) -> None:
 
 def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
     with st.form("daily_journal_form", clear_on_submit=True):
+        st.markdown(
+            '<div class="journey-section-title">Awal catatan</div>'
+            '<div class="journey-section-copy">Beri konteks kecil, agar dirimu nanti tahu hari ini sedang tentang apa.</div>',
+            unsafe_allow_html=True,
+        )
         entry_date = st.date_input("Tanggal", value=date.today())
 
         col_left, col_right = st.columns(2)
         with col_left:
-            activity = st.text_input("Aktivitas utama")
+            activity = st.text_input(
+                "Aktivitas utama",
+                placeholder="Misalnya: kerja panjang, ngobrol dengan teman, istirahat total",
+            )
             life_area = st.selectbox("Area hidup", LIFE_AREAS)
             duration_minutes = st.number_input(
                 "Durasi aktivitas (menit)",
@@ -349,7 +467,10 @@ def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
         with col_right:
             mood_score = st.slider("Mood", min_value=1, max_value=10, value=5)
             energy_score = st.slider("Energi", min_value=1, max_value=10, value=5)
-            food = st.text_input("Makanan/minuman utama")
+            food = st.text_input(
+                "Makanan/minuman utama",
+                placeholder="Apa yang cukup mewakili tubuhmu hari ini?",
+            )
             calories = st.number_input(
                 "Estimasi kalori",
                 min_value=0,
@@ -357,23 +478,47 @@ def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
                 value=0,
             )
 
+        st.markdown('<div class="soft-divider"></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="journey-section">'
+            '<div class="journey-section-title">Refleksi pribadi</div>'
+            '<div class="journey-section-copy">Tulis bagian yang masih tertinggal. Tidak harus bijak, tidak harus selesai.</div>',
+            unsafe_allow_html=True,
+        )
         personal_reflection = st.text_area(
-            "Refleksi pribadi",
+            "Yang paling terasa",
             placeholder="Apa yang paling tinggal di pikiranmu hari ini?",
             height=190,
         )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown(
+            '<div class="journey-section">'
+            '<div class="journey-section-title">Catatan syukur</div>'
+            '<div class="journey-section-copy">Cari satu titik kecil yang masih bisa menjadi pegangan.</div>',
+            unsafe_allow_html=True,
+        )
         gratitude_note = st.text_area(
-            "Catatan syukur",
+            "Yang masih bisa disyukuri",
             placeholder="Satu hal kecil yang masih layak disyukuri.",
             height=130,
         )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown(
+            '<div class="journey-section">'
+            '<div class="journey-section-title">Arah besok</div>'
+            '<div class="journey-section-copy">Bukan target besar. Hanya satu gerakan kecil yang manusiawi.</div>',
+            unsafe_allow_html=True,
+        )
         improvement_action = st.text_area(
-            "Aksi perbaikan",
+            "Satu hal kecil",
             placeholder="Jika besok sedikit lebih ringan, apa satu hal kecil yang ingin kamu coba?",
             height=130,
         )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        submitted = st.form_submit_button("Simpan catatan")
+        submitted = st.form_submit_button("Simpan & Renungkan")
 
     if submitted:
         if not activity.strip():
@@ -409,10 +554,16 @@ def show_full_journal_form(reflection_style: str, entries: list[dict]) -> None:
 
 def show_quick_reflection_form(entries: list[dict]) -> None:
     with st.form("quick_reflection_form", clear_on_submit=True):
+        st.markdown(
+            '<div class="journey-section-title">Catatan cepat</div>'
+            '<div class="journey-section-copy">Untuk hari ketika menulis panjang terasa terlalu berat.</div>',
+            unsafe_allow_html=True,
+        )
         entry_date = st.date_input("Tanggal", value=date.today(), key="quick_date")
         life_area = st.selectbox("Area hidup", LIFE_AREAS, key="quick_life_area")
         mood_score = st.slider("Mood", min_value=1, max_value=10, value=5, key="quick_mood")
         energy_score = st.slider("Energi", min_value=1, max_value=10, value=5, key="quick_energy")
+        st.markdown('<div class="soft-divider"></div>', unsafe_allow_html=True)
         one_sentence = st.text_area(
             "Satu kalimat",
             placeholder="Hari ini yang paling terasa adalah...",
@@ -423,7 +574,7 @@ def show_quick_reflection_form(entries: list[dict]) -> None:
             placeholder="Satu hal kecil yang masih ada.",
         )
 
-        submitted = st.form_submit_button("Simpan catatan singkat")
+        submitted = st.form_submit_button("Tutup Hari Ini Dengan Tenang")
 
     if submitted:
         if not one_sentence.strip():

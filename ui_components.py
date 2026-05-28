@@ -7,14 +7,35 @@ from emotion_engine import extract_entry_emotions
 
 def render_entry_card(entry: dict[str, Any]) -> None:
     with st.container(border=True):
-        st.caption(entry.get("entry_date", "-"))
-        st.markdown(f"**{entry.get('activity') or 'Catatan hari ini'}**")
+        st.markdown(
+            f"""
+            <div style="color:#e7bf88;font-size:0.82rem;margin-bottom:0.35rem;">
+                {entry.get("entry_date", "-")}
+            </div>
+            <div style="font-size:1.08rem;font-weight:700;color:#f7eadb;margin-bottom:0.25rem;">
+                {entry.get("activity") or "Catatan hari ini"}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if entry.get("life_area"):
             st.caption(f"Area: {entry.get('life_area')}")
-        st.write(
-            f"Mood: {entry.get('mood_score')}/10 | "
-            f"Energi: {entry.get('energy_score')}/10 | "
-            f"Durasi: {entry.get('duration_minutes')} menit"
+        st.markdown(
+            f"""
+            <div style="
+                display:flex;
+                gap:0.45rem;
+                flex-wrap:wrap;
+                margin:0.65rem 0 0.75rem;
+                color:#d8c8b6;
+                font-size:0.9rem;
+            ">
+                <span>Mood {entry.get("mood_score")}/10</span>
+                <span>Energi {entry.get("energy_score")}/10</span>
+                <span>{entry.get("duration_minutes")} menit</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
         emotions = extract_entry_emotions(entry)
         if emotions:
