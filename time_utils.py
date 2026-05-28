@@ -72,7 +72,13 @@ def format_human_time(
         return f"Hari ini, {time_text}"
 
     if entry_date == now.date() - timedelta(days=1):
+        if 18 <= local_time.hour or local_time.hour < 4:
+            return "Kemarin malam"
         return f"Kemarin, {time_text}"
+
+    days_ago = (now.date() - entry_date).days
+    if 2 <= days_ago <= 6:
+        return f"{days_ago} hari lalu"
 
     start_of_week = now.date() - timedelta(days=now.weekday())
     if start_of_week <= entry_date <= now.date():

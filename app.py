@@ -356,6 +356,40 @@ st.markdown(
         color: #f2e8dc;
         animation: softFadeIn 420ms ease-out;
     }
+    .meaning-card {
+        border: 1px solid rgba(240, 201, 142, 0.2);
+        border-radius: 20px;
+        padding: 1rem 1.05rem;
+        margin: 1.1rem 0;
+        background:
+            linear-gradient(135deg, rgba(69, 49, 34, 0.86), rgba(31, 25, 21, 0.9)),
+            radial-gradient(circle at 92% 0%, rgba(240, 201, 142, 0.16), transparent 34%);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+    }
+    .meaning-kicker {
+        color: #e7bf88;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+    .meaning-lens {
+        color: #f7eadb;
+        font-size: 1.02rem;
+        font-weight: 700;
+        margin-bottom: 0.65rem;
+    }
+    .meaning-copy {
+        color: #ead9c4;
+        line-height: 1.72;
+        margin-bottom: 0.85rem;
+    }
+    .meaning-small {
+        color: #d8c8b6;
+        font-size: 0.94rem;
+        margin-top: 0.55rem;
+    }
     div[data-testid="stAlert"] {
         background: #3b332c;
         border-color: #6a5a4c;
@@ -637,14 +671,21 @@ def show_meaning_response(entry: dict) -> None:
     if not entry.get("meaning_response"):
         return
 
-    st.subheader("Sudut Pandang Hari Ini")
-    if entry.get("lens_name"):
-        st.caption(f"Lensa: {entry['lens_name']}")
-    st.write(entry["meaning_response"])
-    if entry.get("meaning_question"):
-        st.markdown(f"**Pertanyaan kecil:** {entry['meaning_question']}")
-    if entry.get("micro_action"):
-        st.markdown(f"**Langkah kecil:** {entry['micro_action']}")
+    lens_name = entry.get("lens_name") or "Reflektif"
+    question = entry.get("meaning_question") or ""
+    micro_action = entry.get("micro_action") or ""
+    st.markdown(
+        f"""
+        <div class="meaning-card">
+            <div class="meaning-kicker">Sudut Pandang Hari Ini</div>
+            <div class="meaning-lens">Lensa: {lens_name}</div>
+            <div class="meaning-copy">{entry["meaning_response"]}</div>
+            {f'<div class="meaning-small"><strong>Pertanyaan kecil:</strong> {question}</div>' if question else ''}
+            {f'<div class="meaning-small"><strong>Langkah kecil:</strong> {micro_action}</div>' if micro_action else ''}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def show_welcome(entries: list[dict]) -> None:
