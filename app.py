@@ -153,6 +153,109 @@ st.markdown(
         border-color: rgba(240, 201, 142, 0.58) !important;
         box-shadow: 0 0 0 1px rgba(240, 201, 142, 0.16) !important;
     }
+    div[data-testid="stForm"] label,
+    div[data-testid="stForm"] label p,
+    div[data-testid="stForm"] [data-testid="stWidgetLabel"],
+    div[data-testid="stForm"] [data-testid="stWidgetLabel"] p,
+    div[data-testid="stTextInput"] label,
+    div[data-testid="stTextArea"] label,
+    div[data-testid="stNumberInput"] label,
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stDateInput"] label {
+        color: #f3d7b8 !important;
+        opacity: 1 !important;
+        font-weight: 650 !important;
+    }
+    div[data-testid="stTextInput"],
+    div[data-testid="stTextArea"],
+    div[data-testid="stNumberInput"],
+    div[data-testid="stSelectbox"],
+    div[data-testid="stDateInput"] {
+        color: #fff3e6 !important;
+    }
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stTextArea"] textarea,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stDateInput"] input,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea {
+        background: rgba(55, 46, 39, 0.95) !important;
+        color: #fff3e6 !important;
+        caret-color: #e0a45f !important;
+        border-color: rgba(214, 160, 92, 0.35) !important;
+        -webkit-text-fill-color: #fff3e6 !important;
+    }
+    div[data-testid="stTextInput"] input::placeholder,
+    div[data-testid="stTextArea"] textarea::placeholder,
+    div[data-testid="stNumberInput"] input::placeholder,
+    div[data-testid="stDateInput"] input::placeholder,
+    div[data-baseweb="input"] input::placeholder,
+    div[data-baseweb="textarea"] textarea::placeholder {
+        color: #bda58f !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: #bda58f !important;
+    }
+    div[data-baseweb="input"],
+    div[data-baseweb="textarea"],
+    div[data-baseweb="select"] > div,
+    div[data-testid="stTextInput"] div[data-baseweb="input"],
+    div[data-testid="stTextArea"] div[data-baseweb="textarea"],
+    div[data-testid="stNumberInput"] div[data-baseweb="input"],
+    div[data-testid="stDateInput"] div[data-baseweb="input"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background: rgba(55, 46, 39, 0.95) !important;
+        border-color: rgba(214, 160, 92, 0.35) !important;
+        color: #fff3e6 !important;
+        box-shadow: none !important;
+    }
+    div[data-baseweb="input"]:focus-within,
+    div[data-baseweb="textarea"]:focus-within,
+    div[data-baseweb="select"]:focus-within > div,
+    div[data-testid="stTextInput"]:focus-within div[data-baseweb="input"],
+    div[data-testid="stTextArea"]:focus-within div[data-baseweb="textarea"],
+    div[data-testid="stNumberInput"]:focus-within div[data-baseweb="input"],
+    div[data-testid="stDateInput"]:focus-within div[data-baseweb="input"],
+    div[data-testid="stSelectbox"]:focus-within div[data-baseweb="select"] > div {
+        border-color: #e0a45f !important;
+        box-shadow: 0 0 0 1px rgba(224, 164, 95, 0.4) !important;
+    }
+    div[data-baseweb="select"] span,
+    div[data-testid="stSelectbox"] span,
+    div[data-baseweb="select"] svg,
+    div[data-testid="stSelectbox"] svg {
+        color: #fff3e6 !important;
+        fill: #fff3e6 !important;
+    }
+    div[data-testid="stNumberInput"] button,
+    div[data-testid="stNumberInput"] button svg {
+        background: rgba(75, 58, 44, 0.98) !important;
+        color: #f3d7b8 !important;
+        fill: #f3d7b8 !important;
+        border-color: rgba(214, 160, 92, 0.35) !important;
+    }
+    div[data-testid="stNumberInput"] button:hover,
+    div[data-testid="stNumberInput"] button:hover svg {
+        background: rgba(105, 75, 50, 0.98) !important;
+        color: #fff3e6 !important;
+        fill: #fff3e6 !important;
+    }
+    div[data-baseweb="popover"],
+    div[data-baseweb="menu"],
+    ul[role="listbox"] {
+        background: rgba(30, 24, 19, 0.98) !important;
+        border-color: rgba(214, 160, 92, 0.35) !important;
+        color: #fff3e6 !important;
+    }
+    li[role="option"],
+    div[role="option"] {
+        background: rgba(30, 24, 19, 0.98) !important;
+        color: #fff3e6 !important;
+    }
+    li[role="option"]:hover,
+    div[role="option"]:hover {
+        background: rgba(105, 75, 50, 0.98) !important;
+        color: #fff3e6 !important;
+    }
     .quiet-note {
         color: #c7b9aa;
         font-size: 0.95rem;
