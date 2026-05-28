@@ -3,14 +3,19 @@ from typing import Any
 import streamlit as st
 
 from emotion_engine import extract_entry_emotions
+from time_utils import format_human_time
 
 
 def render_entry_card(entry: dict[str, Any]) -> None:
+    written_time = format_human_time(
+        entry.get("created_at"),
+        journal_date=entry.get("entry_date"),
+    )
     with st.container(border=True):
         st.markdown(
             f"""
             <div style="color:#e7bf88;font-size:0.82rem;margin-bottom:0.35rem;">
-                {entry.get("entry_date", "-")}
+                Ditulis: {written_time}
             </div>
             <div style="font-size:1.08rem;font-weight:700;color:#f7eadb;margin-bottom:0.25rem;">
                 {entry.get("activity") or "Catatan hari ini"}

@@ -10,6 +10,7 @@ from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
 from response_engine import generate_submit_response
+from time_utils import format_human_time
 from ui_components import render_entry_card
 from welcome_engine import generate_welcome
 
@@ -792,11 +793,15 @@ def show_history_page() -> None:
     for entry in entries:
         render_entry_card(entry)
 
-    with st.expander("Lihat data mentah"):
+    with st.expander("Lihat detail tabel"):
         df = pd.DataFrame(entries)
+        df["ditulis"] = df.apply(
+            lambda row: format_human_time(row.get("created_at"), journal_date=row.get("entry_date")),
+            axis=1,
+        )
         display_columns = [
             "id",
-            "entry_date",
+            "ditulis",
             "life_area",
             "activity",
             "duration_minutes",
@@ -808,7 +813,6 @@ def show_history_page() -> None:
             "personal_reflection",
             "gratitude_note",
             "improvement_action",
-            "created_at",
         ]
         st.dataframe(df[display_columns], use_container_width=True, hide_index=True)
 
