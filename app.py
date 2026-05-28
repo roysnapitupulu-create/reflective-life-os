@@ -622,8 +622,8 @@ def save_entry(entry: dict) -> None:
 
 
 def enrich_entry_with_meaning(entry: dict, recent_entries: list[dict], reflection_style: str) -> dict:
-    entry["reflection_style"] = reflection_style
-    meaning = generate_meaning_response(entry, recent_entries)
+    meaning_entry = {**entry, "reflection_style": reflection_style}
+    meaning = generate_meaning_response(meaning_entry, recent_entries)
     entry["themes"] = serialize_themes(meaning["themes"])
     entry["lens_name"] = meaning["lens"]["name"]
     entry["lens_source"] = meaning["lens"]["source"]
