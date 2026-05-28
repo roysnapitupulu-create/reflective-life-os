@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from db import ensure_user_profile, get_entries, init_db, insert_entry, update_user_activity
 from emotion_engine import extract_entry_emotions
@@ -473,6 +474,50 @@ st.markdown(
 init_db()
 
 
+def render_browser_identity_bridge() -> None:
+    components.html(
+        """
+        <script>
+        (function () {
+            const mappings = [
+                ["rid", "rlos_user_id"],
+                ["trusted_until", "rlos_trusted_until"],
+                ["trust_sig", "rlos_trust_sig"]
+            ];
+            try {
+                const parentWindow = window.parent;
+                const url = new URL(parentWindow.location.href);
+                let shouldReload = false;
+
+                mappings.forEach(([paramKey, storageKey]) => {
+                    const paramValue = url.searchParams.get(paramKey);
+                    const storedValue = parentWindow.localStorage.getItem(storageKey);
+
+                    if (paramValue) {
+                        parentWindow.localStorage.setItem(storageKey, paramValue);
+                        return;
+                    }
+
+                    if (storedValue) {
+                        url.searchParams.set(paramKey, storedValue);
+                        shouldReload = true;
+                    }
+                });
+
+                if (shouldReload) {
+                    parentWindow.location.replace(url.toString());
+                }
+            } catch (error) {
+                // If browser storage is unavailable, Streamlit falls back to the access code flow.
+            }
+        })();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
 def get_access_code() -> str:
     env_code = os.getenv("ACCESS_CODE", "").strip()
     if env_code:
@@ -929,6 +974,7 @@ def show_weekly_reflection_page(reflection_style: str) -> None:
     st.write(generate_reflection(weekly_entry, reflection_style))
 
 
+render_browser_identity_bridge()
 require_access_code()
 
 current_user_id = st.session_state["user_id"]

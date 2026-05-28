@@ -113,15 +113,7 @@ def _storage_set(key: str, value: str, component_key: str) -> None:
 
 
 def _storage_ready(st: Any) -> bool:
-    if not _local_storage_available():
-        return True
-    if st.session_state.get("_rlos_storage_ready"):
-        return True
-    _storage_get(STORAGE_USER_ID, "rlos_storage_probe_user_id")
-    _storage_get(STORAGE_TRUSTED_UNTIL, "rlos_storage_probe_trusted_until")
-    _storage_get(STORAGE_TRUST_SIG, "rlos_storage_probe_trust_sig")
-    st.session_state["_rlos_storage_ready"] = True
-    return False
+    return True
 
 
 def get_or_create_user_id(st: Any) -> tuple[str | None, bool]:
