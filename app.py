@@ -13,6 +13,7 @@ from identity_engine import (
     mark_access_trusted,
     utc_now_iso,
 )
+from meaning_engine import generate_meaning_response, serialize_themes
 from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
@@ -607,11 +608,43 @@ def make_entry(
         "improvement_action": improvement_action.strip(),
         "created_at": now,
         "updated_at": now,
+        "themes": "",
+        "lens_name": "",
+        "lens_source": "",
+        "meaning_response": "",
+        "meaning_question": "",
+        "micro_action": "",
     }
 
 
 def save_entry(entry: dict) -> None:
     insert_entry(**entry)
+
+
+def enrich_entry_with_meaning(entry: dict, recent_entries: list[dict], reflection_style: str) -> dict:
+    entry["reflection_style"] = reflection_style
+    meaning = generate_meaning_response(entry, recent_entries)
+    entry["themes"] = serialize_themes(meaning["themes"])
+    entry["lens_name"] = meaning["lens"]["name"]
+    entry["lens_source"] = meaning["lens"]["source"]
+    entry["meaning_response"] = meaning["response"]
+    entry["meaning_question"] = meaning["question"]
+    entry["micro_action"] = meaning["micro_action"]
+    return entry
+
+
+def show_meaning_response(entry: dict) -> None:
+    if not entry.get("meaning_response"):
+        return
+
+    st.subheader("Sudut Pandang Hari Ini")
+    if entry.get("lens_name"):
+        st.caption(f"Lensa: {entry['lens_name']}")
+    st.write(entry["meaning_response"])
+    if entry.get("meaning_question"):
+        st.markdown(f"**Pertanyaan kecil:** {entry['meaning_question']}")
+    if entry.get("micro_action"):
+        st.markdown(f"**Langkah kecil:** {entry['micro_action']}")
 
 
 def show_welcome(entries: list[dict]) -> None:
@@ -794,6 +827,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
             improvement_action,
             user_id,
         )
+        entry = enrich_entry_with_meaning(entry, entries, reflection_style)
         save_entry(entry)
         updated_entries = [entry] + entries
         st.success("Catatan tersimpan.")
@@ -802,6 +836,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
             unsafe_allow_html=True,
         )
         show_emotion_note(entry)
+        show_meaning_response(entry)
 
         with st.expander("Baca refleksi singkat"):
             st.write(generate_reflection(entry, reflection_style))
@@ -851,6 +886,7 @@ def show_quick_reflection_form(entries: list[dict], user_id: str) -> None:
             "",
             user_id,
         )
+        entry = enrich_entry_with_meaning(entry, entries, "Lembut")
         save_entry(entry)
         updated_entries = [entry] + entries
         st.success("Catatan singkat tersimpan.")
@@ -859,6 +895,7 @@ def show_quick_reflection_form(entries: list[dict], user_id: str) -> None:
             unsafe_allow_html=True,
         )
         show_emotion_note(entry)
+        show_meaning_response(entry)
 
 
 def show_history_page() -> None:
@@ -893,6 +930,8 @@ def show_history_page() -> None:
             "personal_reflection",
             "gratitude_note",
             "improvement_action",
+            "lens_name",
+            "meaning_question",
         ]
         st.dataframe(df[display_columns], use_container_width=True, hide_index=True)
 
@@ -919,6 +958,9 @@ def show_today_insight_page(reflection_style: str) -> None:
 
     if latest_entry.get("improvement_action"):
         st.write(f"Aksi berikutnya: {latest_entry['improvement_action']}")
+
+    st.divider()
+    show_meaning_response(latest_entry)
 
     st.divider()
     st.subheader("Bacaan singkat")

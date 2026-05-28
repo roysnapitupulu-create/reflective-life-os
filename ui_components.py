@@ -46,6 +46,11 @@ def render_entry_card(entry: dict[str, Any]) -> None:
         if emotions:
             st.caption(f"Nuansa hari ini: {', '.join(emotions)}")
 
+        if entry.get("lens_name"):
+            st.caption(f"Lensa refleksi: {entry.get('lens_name')}")
+        if entry.get("meaning_question"):
+            st.markdown(f"**Pertanyaan kecil:** {entry.get('meaning_question')}")
+
         if entry.get("personal_reflection"):
             st.markdown("**Yang tertulis:**")
             st.write(entry["personal_reflection"])

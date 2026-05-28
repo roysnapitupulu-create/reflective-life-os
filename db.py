@@ -33,7 +33,13 @@ def init_db() -> None:
                 gratitude_note TEXT,
                 improvement_action TEXT,
                 created_at TEXT,
-                updated_at TEXT
+                updated_at TEXT,
+                themes TEXT,
+                lens_name TEXT,
+                lens_source TEXT,
+                meaning_response TEXT,
+                meaning_question TEXT,
+                micro_action TEXT
             )
             """
         )
@@ -58,6 +64,17 @@ def init_db() -> None:
             conn.execute("ALTER TABLE journal_entries ADD COLUMN user_id TEXT")
         if "updated_at" not in columns:
             conn.execute("ALTER TABLE journal_entries ADD COLUMN updated_at TEXT")
+        meaning_columns = {
+            "themes": "TEXT",
+            "lens_name": "TEXT",
+            "lens_source": "TEXT",
+            "meaning_response": "TEXT",
+            "meaning_question": "TEXT",
+            "micro_action": "TEXT",
+        }
+        for column_name, column_type in meaning_columns.items():
+            if column_name not in columns:
+                conn.execute(f"ALTER TABLE journal_entries ADD COLUMN {column_name} {column_type}")
         conn.commit()
 
 
@@ -117,6 +134,12 @@ def insert_entry(
     improvement_action: str,
     created_at: str,
     updated_at: str,
+    themes: str = "",
+    lens_name: str = "",
+    lens_source: str = "",
+    meaning_response: str = "",
+    meaning_question: str = "",
+    micro_action: str = "",
 ) -> int:
     with get_connection() as conn:
         cursor = conn.execute(
@@ -136,9 +159,15 @@ def insert_entry(
                 gratitude_note,
                 improvement_action,
                 created_at,
-                updated_at
+                updated_at,
+                themes,
+                lens_name,
+                lens_source,
+                meaning_response,
+                meaning_question,
+                micro_action
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -156,6 +185,12 @@ def insert_entry(
                 improvement_action,
                 created_at,
                 updated_at,
+                themes,
+                lens_name,
+                lens_source,
+                meaning_response,
+                meaning_question,
+                micro_action,
             ),
         )
         conn.commit()
