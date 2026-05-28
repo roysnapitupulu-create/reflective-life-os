@@ -146,7 +146,7 @@ def _keywords_from_text(text: str) -> list[str]:
 
 
 def analyze_reflection_memory(recent_entries: list[dict[str, Any]]) -> dict[str, Any]:
-    recent = recent_entries[:7]
+    recent = recent_entries[:10]
     theme_counter: Counter[str] = Counter()
     area_counter: Counter[str] = Counter()
     word_counter: Counter[str] = Counter()
@@ -182,6 +182,9 @@ def analyze_reflection_memory(recent_entries: list[dict[str, Any]]) -> dict[str,
         "dominant_area": area_counter.most_common(1)[0][0] if area_counter else "",
         "frequent_words": [word for word, count in word_counter.most_common(4) if count >= 2],
         "tone": tone,
+        "average_mood": average_mood,
+        "average_energy": average_energy,
+        "dominant_emotion": theme_counter.most_common(1)[0][0] if theme_counter else "",
     }
 
 
@@ -200,6 +203,42 @@ def _memory_sentence(memory: dict[str, Any]) -> str:
     if dominant_area:
         return f"Area {dominant_area.lower()} cukup sering muncul dalam catatan terakhirmu."
     return ""
+
+
+def generate_weekly_mirror(entries: list[dict[str, Any]]) -> dict[str, Any]:
+    weekly_entries = entries[:7]
+    memory = analyze_reflection_memory(weekly_entries)
+    repeated_themes = memory.get("repeated_themes") or []
+    dominant_area = memory.get("dominant_area") or "belum terlalu jelas"
+    dominant_emotion = memory.get("dominant_emotion") or "campuran"
+    average_mood = memory.get("average_mood") or 0
+    average_energy = memory.get("average_energy") or 0
+
+    if "exhaustion" in repeated_themes or average_energy <= 4:
+        narrative = "Minggu ini banyak energimu tampaknya habis untuk bertahan. Ada baiknya tidak membaca itu sebagai gagal; kadang bertahan pun sudah memakai banyak ruang batin."
+        question = "Apa satu hal yang bisa kamu ringankan minggu depan?"
+    elif "gratitude" in repeated_themes:
+        narrative = "Minggu ini ada beberapa tanda bahwa kamu masih menemukan pegangan kecil. Tidak besar, tapi cukup untuk menunjukkan bahwa harimu tidak hanya berisi beban."
+        question = "Pegangan kecil apa yang ingin kamu jaga minggu depan?"
+    elif "work pressure" in repeated_themes or dominant_area.lower() == "kerja":
+        narrative = "Tema tanggung jawab dan tekanan tampaknya cukup sering hadir minggu ini. Mungkin tubuh dan pikiranmu sedang meminta batas yang lebih manusiawi."
+        question = "Batas kecil apa yang ingin kamu hormati minggu depan?"
+    elif "relationship" in repeated_themes:
+        narrative = "Relasi tampaknya memberi warna kuat minggu ini. Ada hal-hal yang mungkin belum selesai, tapi mulai terlihat sebagai sesuatu yang penting untuk didengar."
+        question = "Percakapan apa yang sebenarnya paling kamu butuhkan?"
+    else:
+        narrative = "Minggu ini belum menunjukkan satu pola yang sangat kuat. Tapi tetap ada jejak: kamu masih kembali menulis, dan itu berarti kamu memberi ruang untuk mendengar diri sendiri."
+        question = "Apa satu hal dari minggu ini yang tidak ingin kamu lewatkan begitu saja?"
+
+    return {
+        "themes": repeated_themes,
+        "dominant_area": dominant_area,
+        "dominant_emotion": dominant_emotion,
+        "average_mood": average_mood,
+        "average_energy": average_energy,
+        "narrative": narrative,
+        "question": question,
+    }
 
 
 def select_reflective_lens(themes: list[str], life_area: str, reflection_style: str) -> dict[str, str]:

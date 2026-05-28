@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from meaning_engine import analyze_reflection_memory
+
 
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
@@ -25,13 +27,20 @@ def generate_welcome(entries: list[dict[str, Any]], now: datetime | None = None)
         return f"{greeting}."
 
     latest = entries[0]
+    memory = analyze_reflection_memory(entries[:7])
     mood = int(latest.get("mood_score") or 0)
     energy = int(latest.get("energy_score") or 0)
     activity = str(latest.get("activity") or "hari terakhirmu").strip()
     reflection = str(latest.get("personal_reflection") or "").lower()
 
     if mood <= 4 or energy <= 4:
-        return f"{greeting}. Terakhir, {activity} tampaknya cukup mengurasmu. Kita mulai pelan saja."
+        return f"{greeting}. Tidak semua hari harus diselesaikan sekaligus."
+
+    if memory.get("average_energy") and memory["average_energy"] <= 4:
+        return f"{greeting}. Beberapa hari terakhir energimu tampak sering turun. Kita mulai dari satu napas dulu."
+
+    if "exhaustion" in (memory.get("repeated_themes") or []):
+        return f"{greeting}. Kamu masih sampai di sini. Itu juga sesuatu."
 
     tired_words = ["lelah", "capek", "berat", "penat"]
     if any(word in reflection for word in tired_words):

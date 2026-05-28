@@ -13,7 +13,7 @@ from identity_engine import (
     mark_access_trusted,
     utc_now_iso,
 )
-from meaning_engine import generate_meaning_response, serialize_themes
+from meaning_engine import generate_meaning_response, generate_weekly_mirror, serialize_themes
 from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
@@ -389,6 +389,21 @@ st.markdown(
         color: #d8c8b6;
         font-size: 0.94rem;
         margin-top: 0.55rem;
+    }
+    .mirror-card {
+        border: 1px solid rgba(240, 201, 142, 0.18);
+        border-radius: 20px;
+        padding: 1rem 1.05rem;
+        margin: 1rem 0;
+        background: rgba(42, 33, 27, 0.82);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+    }
+    .mirror-row {
+        color: #d8c8b6;
+        margin: 0.4rem 0;
+    }
+    .mirror-row strong {
+        color: #f3d5a8;
     }
     div[data-testid="stAlert"] {
         background: #3b332c;
@@ -945,7 +960,7 @@ def show_history_page() -> None:
 
     entries = get_entries(st.session_state["user_id"])
     if not entries:
-        st.info("Belum ada yang ditulis. Tidak perlu buru-buru.")
+        st.info("Belum ada jejak tulisan di sini. Kadang satu kalimat jujur sudah cukup untuk memulai.")
         return
 
     for entry in entries:
@@ -1012,16 +1027,17 @@ def show_today_insight_page(reflection_style: str) -> None:
 
 
 def show_weekly_reflection_page(reflection_style: str) -> None:
-    st.title("Refleksi Mingguan")
-    st.caption("Bukan penilaian. Hanya melihat beberapa hari terakhir dengan sedikit jarak.")
+    st.title("Cermin Mingguan")
+    st.caption("Bukan laporan. Hanya cara pelan untuk melihat minggu ini dengan sedikit jarak.")
 
     entries = get_entries(st.session_state["user_id"])
     if not entries:
-        st.info("Belum ada cukup cerita untuk dirangkum. Mulai dari satu catatan kecil saja.")
+        st.info("Belum ada cukup cerita untuk dipantulkan. Mulai dari satu kalimat jujur saja.")
         return
 
     weekly_entries = entries[:7]
     df = pd.DataFrame(weekly_entries)
+    mirror = generate_weekly_mirror(weekly_entries)
 
     average_mood = df["mood_score"].mean()
     average_energy = df["energy_score"].mean()
@@ -1030,22 +1046,30 @@ def show_weekly_reflection_page(reflection_style: str) -> None:
     area_counts = df["life_area"].fillna("Belum dicatat").replace("", "Belum dicatat").value_counts()
     most_common_area = area_counts.index[0] if not area_counts.empty else "Belum dicatat"
 
-    summary_rows = pd.DataFrame(
-        [
-            {"Ringkasan": "Rata-rata mood", "Nilai": f"{average_mood:.1f}/10"},
-            {"Ringkasan": "Rata-rata energi", "Nilai": f"{average_energy:.1f}/10"},
-            {"Ringkasan": "Total biaya", "Nilai": format_rupiah(float(total_cost))},
-            {"Ringkasan": "Total aktivitas", "Nilai": str(total_activities)},
-            {"Ringkasan": "Area hidup paling sering", "Nilai": most_common_area},
-        ]
+    themes_text = ", ".join(mirror["themes"]) if mirror["themes"] else "belum dominan"
+    st.markdown(
+        f"""
+        <div class="mirror-card">
+            <div class="meaning-kicker">Cermin Mingguan</div>
+            <div class="meaning-copy">{mirror["narrative"]}</div>
+            <div class="mirror-row"><strong>Tema minggu ini:</strong> {themes_text}</div>
+            <div class="mirror-row"><strong>Emosi dominan:</strong> {mirror["dominant_emotion"]}</div>
+            <div class="mirror-row"><strong>Area yang sering muncul:</strong> {most_common_area}</div>
+            <div class="mirror-row"><strong>Mood rata-rata:</strong> {average_mood:.1f}/10</div>
+            <div class="mirror-row"><strong>Energi rata-rata:</strong> {average_energy:.1f}/10</div>
+            <div class="meaning-small"><strong>Pertanyaan akhir minggu:</strong> {mirror["question"]}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.dataframe(summary_rows, use_container_width=True, hide_index=True)
 
     st.divider()
-    show_pattern_noticing(weekly_entries, "Pattern Noticing Mingguan")
+    st.subheader("Catatan kecil")
+    st.write(f"Minggu ini kamu menulis {total_activities} kali. Total biaya yang tercatat: {format_rupiah(float(total_cost))}.")
+    show_pattern_noticing(weekly_entries, "Pola yang pelan-pelan terlihat")
 
     st.divider()
-    st.subheader("Bacaan mingguan")
+    st.subheader("Bacaan singkat")
     weekly_entry = {
         "mood_score": round(float(average_mood)),
         "energy_score": round(float(average_energy)),
@@ -1070,7 +1094,7 @@ reflection_style = st.sidebar.selectbox("Reflection Style", REFLECTION_STYLES)
 update_user_activity(current_user_id, utc_now_iso(), reflection_style)
 page = st.sidebar.radio(
     "Navigasi",
-    ["Input Harian", "History", "Insight Hari Ini", "Weekly Reflection"],
+    ["Input Harian", "History", "Insight Hari Ini", "Cermin Mingguan"],
 )
 show_feedback_section()
 
