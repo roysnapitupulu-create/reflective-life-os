@@ -1,20 +1,24 @@
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
+
+
+JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
 
 def _time_greeting(now: datetime) -> str:
     hour = now.hour
     if 4 <= hour < 11:
-        return "Selamat pagi. Semoga hari ini tidak terlalu keras untukmu"
+        return "Selamat pagi. Mulai pelan saja, tidak perlu langsung penuh energi"
     if 11 <= hour < 15:
         return "Selamat siang. Ambil napas sebentar sebelum lanjut"
     if 15 <= hour < 18:
-        return "Selamat sore. Hari ini sudah berjalan cukup jauh"
-    return "Selamat malam. Malam sering membuat pikiran lebih jujur"
+        return "Selamat sore. Hari ini sudah berjalan cukup jauh, dan itu layak diakui"
+    return "Selamat malam. Ini ruang kecil untuk menutup hari dengan lebih tenang"
 
 
 def generate_welcome(entries: list[dict[str, Any]], now: datetime | None = None) -> str:
-    current_time = now or datetime.now()
+    current_time = now.astimezone(JAKARTA_TZ) if now else datetime.now(JAKARTA_TZ)
     greeting = _time_greeting(current_time)
 
     if not entries:
