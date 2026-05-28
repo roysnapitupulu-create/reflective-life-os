@@ -58,6 +58,33 @@ st.markdown(
         background: rgba(50, 42, 35, 0.94);
         border-right: 1px solid rgba(201, 158, 103, 0.16);
     }
+    section[data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        background: rgba(50, 42, 35, 0.98);
+        color: #f7eadb;
+    }
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] div {
+        color: #f7eadb;
+    }
+    section[data-testid="stSidebar"] [role="radiogroup"] label {
+        border-radius: 12px;
+        padding: 0.25rem 0.35rem;
+    }
+    section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
+        background: rgba(240, 201, 142, 0.12);
+    }
+    section[data-testid="stSidebar"] [role="radio"][aria-checked="true"],
+    section[data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
+        color: #f0c98e;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+        background: rgba(24, 18, 14, 0.92);
+        border-color: rgba(240, 201, 142, 0.38);
+        color: #f7eadb;
+    }
     .block-container {
         max-width: 820px;
         padding-top: 1.35rem;
@@ -223,6 +250,51 @@ st.markdown(
         color: #f2e8dc;
     }
     @media (max-width: 640px) {
+        section[data-testid="stSidebar"] {
+            background: rgba(24, 18, 14, 0.98) !important;
+            border-right: 1px solid rgba(240, 201, 142, 0.22);
+            box-shadow: 18px 0 48px rgba(0, 0, 0, 0.38);
+        }
+        section[data-testid="stSidebar"] > div,
+        section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            background: rgba(24, 18, 14, 0.98) !important;
+            backdrop-filter: none;
+        }
+        section[data-testid="stSidebar"] h1,
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3,
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] p,
+        section[data-testid="stSidebar"] span,
+        section[data-testid="stSidebar"] div {
+            color: #f7eadb !important;
+            opacity: 1 !important;
+        }
+        section[data-testid="stSidebar"] [role="radiogroup"] label {
+            min-height: 2.4rem;
+            display: flex;
+            align-items: center;
+            border-radius: 14px;
+            margin: 0.15rem 0;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+            background: rgba(201, 116, 48, 0.22);
+            outline: 1px solid rgba(240, 201, 142, 0.36);
+        }
+        section[data-testid="stSidebar"] input[type="radio"] {
+            accent-color: #f0c98e;
+        }
+        section[data-testid="stSidebar"] [data-baseweb="select"] > div,
+        section[data-testid="stSidebar"] input,
+        section[data-testid="stSidebar"] textarea {
+            background: rgba(38, 28, 22, 0.98) !important;
+            border-color: rgba(240, 201, 142, 0.42) !important;
+            color: #f7eadb !important;
+        }
+        section[data-testid="stSidebar"] .beta-label {
+            color: #f0c98e !important;
+        }
         .block-container {
             padding-left: 1.05rem;
             padding-right: 1.05rem;
