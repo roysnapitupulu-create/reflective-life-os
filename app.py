@@ -1157,6 +1157,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
             type=["jpg", "jpeg", "png", "webp", "heic", "heif"],
             accept_multiple_files=False,
         )
+        camera_photo = st.camera_input("Atau ambil foto langsung", key="daily_memory_camera")
         memory_note = st.text_area(
             "Catatan kecil opsional",
             placeholder="Satu kalimat kecil untuk dirimu nanti.",
@@ -1170,7 +1171,8 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
         if not activity.strip():
             st.error("Aktivitas utama perlu diisi.")
             return
-        image_error = validate_image_upload(memory_photo)
+        selected_memory_photo = memory_photo or camera_photo
+        image_error = validate_image_upload(selected_memory_photo)
         if image_error:
             st.error(image_error)
             return
@@ -1193,7 +1195,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
         entry = enrich_entry_with_meaning(entry, entries, reflection_style)
         saved_entry = save_entry(entry)
         artifact = None
-        if memory_photo is not None:
+        if selected_memory_photo is not None:
             try:
                 journal_context = " ".join(
                     [
@@ -1206,7 +1208,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
                 )
                 artifact = save_entry_memory_artifact(
                     saved_entry,
-                    memory_photo,
+                    selected_memory_photo,
                     memory_note,
                     user_id,
                     journal_context,
