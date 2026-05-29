@@ -15,7 +15,7 @@ def render_memory_artifacts(entry: dict[str, Any]) -> None:
     image_source = artifact.get("image_url") or artifact.get("image_path")
     st.markdown("**Memory Artifact**")
     if image_source:
-        st.image(image_source, width=220)
+        st.image(image_source, width=180)
     if artifact.get("memory_note"):
         st.caption("Catatan kecil:")
         st.write(artifact["memory_note"])
