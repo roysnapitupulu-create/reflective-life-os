@@ -773,7 +773,7 @@ def save_entry_memory_artifact(
     if not entry_id:
         raise CloudStorageError("Catatan tersimpan, tapi id catatan belum tersedia untuk foto.")
 
-    side_note = choose_side_note()
+    side_note = choose_side_note(memory_note, getattr(uploaded_file, "name", ""))
     if is_supabase_enabled():
         return save_memory_artifact(
             user_id=user_id,
