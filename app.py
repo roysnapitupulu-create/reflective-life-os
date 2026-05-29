@@ -765,6 +765,7 @@ def save_entry_memory_artifact(
     uploaded_file,
     memory_note: str,
     user_id: str,
+    journal_text: str = "",
 ) -> dict | None:
     if uploaded_file is None:
         return None
@@ -773,7 +774,7 @@ def save_entry_memory_artifact(
     if not entry_id:
         raise CloudStorageError("Catatan tersimpan, tapi id catatan belum tersedia untuk foto.")
 
-    side_note = choose_side_note(memory_note, getattr(uploaded_file, "name", ""))
+    side_note = choose_side_note(memory_note, getattr(uploaded_file, "name", ""), journal_text)
     if is_supabase_enabled():
         return save_memory_artifact(
             user_id=user_id,
@@ -1035,11 +1036,21 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
         artifact = None
         if memory_photo is not None:
             try:
+                journal_context = " ".join(
+                    [
+                        activity,
+                        personal_reflection,
+                        gratitude_note,
+                        improvement_action,
+                        food,
+                    ]
+                )
                 artifact = save_entry_memory_artifact(
                     saved_entry,
                     memory_photo,
                     memory_note,
                     user_id,
+                    journal_context,
                 )
             except CloudStorageError as exc:
                 st.warning("Catatan tersimpan. Foto belum berhasil disimpan, jadi kamu bisa mencoba lagi nanti.")
