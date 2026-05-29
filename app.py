@@ -735,17 +735,28 @@ def save_entry(entry: dict) -> dict:
     return {**entry, "id": entry_id}
 
 
+def artifact_entry_id(artifact: dict) -> str:
+    entry_id = str(artifact.get("journal_entry_id") or "").strip()
+    if entry_id:
+        return entry_id
+
+    image_path_parts = str(artifact.get("image_path") or "").split("/")
+    if len(image_path_parts) >= 3:
+        return image_path_parts[-2].strip()
+    return ""
+
+
 def attach_memory_artifacts(entries: list[dict], artifacts: list[dict]) -> list[dict]:
     artifacts_by_entry_id: dict[str, list[dict]] = {}
     for artifact in artifacts:
-        entry_id = str(artifact.get("journal_entry_id") or "")
+        entry_id = artifact_entry_id(artifact)
         if not entry_id:
             continue
         artifacts_by_entry_id.setdefault(entry_id, []).append(artifact)
 
     enriched_entries: list[dict] = []
     for entry in entries:
-        entry_id = str(entry.get("id") or "")
+        entry_id = str(entry.get("id") or "").strip()
         enriched_entries.append(
             {
                 **entry,

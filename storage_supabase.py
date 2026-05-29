@@ -178,7 +178,7 @@ def _from_artifact_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": row.get("id"),
         "user_id": row.get("user_id"),
-        "journal_entry_id": row.get("journal_entry_id"),
+        "journal_entry_id": str(row.get("journal_entry_id") or ""),
         "image_path": image_path,
         "image_url": _signed_url_for_path(image_path),
         "memory_note": row.get("memory_note") or "",
