@@ -3,6 +3,8 @@ import os
 from typing import Any
 import uuid
 
+from memory_artifacts import get_image_extension
+
 try:
     import streamlit as st
 except Exception:
@@ -178,7 +180,7 @@ def save_memory_artifact(
     created_at: str,
 ) -> dict[str, Any]:
     artifact_id = str(uuid.uuid4())
-    extension = os.path.splitext(str(filename or ""))[1].lower() or ".jpg"
+    extension = get_image_extension(filename, content_type)
     image_path = f"{user_id}/{journal_entry_id}/{artifact_id}{extension}"
 
     try:

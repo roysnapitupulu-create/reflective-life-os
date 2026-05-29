@@ -994,7 +994,7 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
         )
         memory_photo = st.file_uploader(
             "Upload 1 foto",
-            type=["jpg", "jpeg", "png", "webp"],
+            type=["jpg", "jpeg", "png", "webp", "heic", "heif"],
             accept_multiple_files=False,
         )
         memory_note = st.text_area(

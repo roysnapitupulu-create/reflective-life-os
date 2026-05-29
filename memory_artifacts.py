@@ -3,9 +3,9 @@ import random
 from typing import Any
 
 
-MAX_IMAGE_BYTES = 5 * 1024 * 1024
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
-ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"}
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 
 SIDE_NOTES = [
     "Coffee trees can live for decades.",
@@ -44,6 +44,8 @@ def get_image_extension(filename: str, mime_type: str = "") -> str:
     extension = Path(str(filename or "")).suffix.lower()
     if extension in ALLOWED_IMAGE_EXTENSIONS:
         return extension
+    if mime_type in {"image/heic", "image/heif"}:
+        return ".heic"
     if mime_type == "image/png":
         return ".png"
     if mime_type == "image/webp":
@@ -58,13 +60,15 @@ def validate_image_upload(uploaded_file: Any) -> str | None:
     mime_type = str(getattr(uploaded_file, "type", "") or "")
     extension = Path(str(getattr(uploaded_file, "name", "") or "")).suffix.lower()
     if mime_type not in ALLOWED_IMAGE_TYPES and extension not in ALLOWED_IMAGE_EXTENSIONS:
-        return "Foto perlu berupa JPG, PNG, atau WebP."
+        if mime_type.startswith("image/"):
+            return None
+        return "Foto perlu berupa file gambar dari kamera atau galeri."
 
     try:
         size = int(getattr(uploaded_file, "size", 0) or 0)
     except (TypeError, ValueError):
         size = 0
     if size > MAX_IMAGE_BYTES:
-        return "Ukuran foto maksimal 5 MB untuk versi awal ini."
+        return "Ukuran foto maksimal 10 MB untuk versi awal ini."
 
     return None
