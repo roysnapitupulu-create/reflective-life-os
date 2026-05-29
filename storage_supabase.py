@@ -189,6 +189,10 @@ def save_memory_artifact(
             image_bytes,
             {"content-type": content_type or "image/jpeg", "upsert": "false"},
         )
+    except Exception as exc:
+        raise CloudStorageError(f"Foto belum bisa diunggah ke storage: {exc}") from exc
+
+    try:
         response = (
             _client()
             .table(MEMORY_ARTIFACTS_TABLE)
@@ -196,7 +200,7 @@ def save_memory_artifact(
                 {
                     "id": artifact_id,
                     "user_id": user_id,
-                    "journal_entry_id": journal_entry_id,
+                    "journal_entry_id": str(journal_entry_id),
                     "image_path": image_path,
                     "memory_note": memory_note,
                     "side_note": side_note,
@@ -206,7 +210,11 @@ def save_memory_artifact(
             .execute()
         )
     except Exception as exc:
-        raise CloudStorageError("Foto belum bisa disimpan.") from exc
+        try:
+            _client().storage.from_(MEMORY_ARTIFACTS_BUCKET).remove([image_path])
+        except Exception:
+            pass
+        raise CloudStorageError(f"Metadata foto belum bisa disimpan: {exc}") from exc
 
     data = response.data or []
     return _from_artifact_row(data[0]) if data else {

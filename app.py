@@ -1041,8 +1041,10 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
                     memory_note,
                     user_id,
                 )
-            except CloudStorageError:
+            except CloudStorageError as exc:
                 st.warning("Catatan tersimpan. Foto belum berhasil disimpan, jadi kamu bisa mencoba lagi nanti.")
+                with st.expander("Detail teknis upload foto"):
+                    st.code(str(exc))
 
         if artifact:
             saved_entry = {**saved_entry, "memory_artifacts": [artifact]}
