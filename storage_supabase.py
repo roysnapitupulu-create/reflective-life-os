@@ -25,6 +25,24 @@ class CloudStorageError(Exception):
     pass
 
 
+def _describe_exception(exc: Exception) -> str:
+    parts = [type(exc).__name__]
+    message = str(exc).strip()
+    if message:
+        parts.append(message)
+    if getattr(exc, "args", None):
+        parts.append(f"args={exc.args!r}")
+    response = getattr(exc, "response", None)
+    if response is not None:
+        status_code = getattr(response, "status_code", "")
+        text = getattr(response, "text", "")
+        if status_code:
+            parts.append(f"status={status_code}")
+        if text:
+            parts.append(f"response={text}")
+    return " | ".join(parts)
+
+
 def _get_secret(name: str, default: str = "") -> str:
     env_value = os.getenv(name, "").strip()
     if env_value:
@@ -184,13 +202,18 @@ def save_memory_artifact(
     image_path = f"{user_id}/{journal_entry_id}/{artifact_id}{extension}"
 
     try:
-        _client().storage.from_(MEMORY_ARTIFACTS_BUCKET).upload(
-            image_path,
-            image_bytes,
-            {"content-type": content_type or "image/jpeg", "upsert": "false"},
-        )
+        bucket = _client().storage.from_(MEMORY_ARTIFACTS_BUCKET)
+        file_options = {
+            "content-type": content_type or "image/jpeg",
+            "cache-control": "3600",
+            "upsert": "false",
+        }
+        try:
+            bucket.upload(path=image_path, file=image_bytes, file_options=file_options)
+        except TypeError:
+            bucket.upload(image_path, image_bytes, file_options)
     except Exception as exc:
-        raise CloudStorageError(f"Foto belum bisa diunggah ke storage: {exc}") from exc
+        raise CloudStorageError(f"Foto belum bisa diunggah ke storage: {_describe_exception(exc)}") from exc
 
     try:
         response = (
@@ -214,7 +237,7 @@ def save_memory_artifact(
             _client().storage.from_(MEMORY_ARTIFACTS_BUCKET).remove([image_path])
         except Exception:
             pass
-        raise CloudStorageError(f"Metadata foto belum bisa disimpan: {exc}") from exc
+        raise CloudStorageError(f"Metadata foto belum bisa disimpan: {_describe_exception(exc)}") from exc
 
     data = response.data or []
     return _from_artifact_row(data[0]) if data else {
