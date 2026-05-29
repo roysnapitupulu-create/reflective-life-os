@@ -1,4 +1,5 @@
-from datetime import date
+from collections import Counter
+from datetime import date, timedelta
 import os
 from pathlib import Path
 import uuid
@@ -23,7 +24,7 @@ from identity_engine import (
     mark_access_trusted,
     utc_now_iso,
 )
-from meaning_engine import generate_meaning_response, generate_weekly_mirror, serialize_themes
+from meaning_engine import generate_meaning_response, serialize_themes
 from memory_artifacts import choose_side_note, get_image_extension, validate_image_upload
 from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
@@ -54,6 +55,43 @@ LIFE_AREAS = [
 ]
 
 REFLECTION_STYLES = ["Lembut", "Praktis", "Filosofis", "Stoic", "Religius"]
+
+WEEKLY_MIRROR_STOPWORDS = {
+    "aku",
+    "yang",
+    "dan",
+    "atau",
+    "di",
+    "ke",
+    "ini",
+    "itu",
+    "hari",
+    "minggu",
+    "dengan",
+    "untuk",
+    "tidak",
+    "gak",
+    "ga",
+    "ada",
+    "jadi",
+    "karena",
+    "dari",
+    "masih",
+    "sudah",
+    "bisa",
+    "mau",
+    "ingin",
+    "lebih",
+    "satu",
+    "hal",
+    "kecil",
+    "terasa",
+    "rasanya",
+    "cukup",
+    "hari",
+    "besok",
+    "malam",
+}
 
 
 st.set_page_config(
@@ -859,6 +897,116 @@ def show_emotion_note(entry: dict) -> None:
         )
 
 
+def parse_entry_date(entry: dict) -> date | None:
+    raw_date = str(entry.get("entry_date") or entry.get("created_at") or "").strip()
+    if not raw_date:
+        return None
+    try:
+        return date.fromisoformat(raw_date[:10])
+    except ValueError:
+        return None
+
+
+def get_weekly_mirror_entries(entries: list[dict]) -> list[dict]:
+    today = date.today()
+    week_start = today - timedelta(days=6)
+    dated_entries = [
+        entry
+        for entry in entries
+        if (entry_date := parse_entry_date(entry)) and week_start <= entry_date <= today
+    ]
+    return dated_entries or entries[:7]
+
+
+def entry_text_for_mirror(entry: dict) -> str:
+    return " ".join(
+        [
+            str(entry.get("activity") or ""),
+            str(entry.get("personal_reflection") or ""),
+            str(entry.get("gratitude_note") or ""),
+            str(entry.get("improvement_action") or ""),
+            str(entry.get("food") or ""),
+        ]
+    )
+
+
+def collect_weekly_words(entries: list[dict], limit: int = 3) -> list[str]:
+    words: list[str] = []
+    for entry in entries:
+        normalized = entry_text_for_mirror(entry).lower()
+        cleaned = "".join(char if char.isalpha() or char.isspace() else " " for char in normalized)
+        for word in cleaned.split():
+            if len(word) >= 5 and word not in WEEKLY_MIRROR_STOPWORDS:
+                words.append(word)
+
+    word_counts = Counter(words)
+    return [word for word, count in word_counts.most_common(limit) if count >= 2]
+
+
+def collect_weekly_artifacts(entries: list[dict]) -> list[dict]:
+    artifacts: list[dict] = []
+    for entry in entries:
+        for artifact in entry.get("memory_artifacts") or []:
+            artifacts.append(artifact)
+    return artifacts
+
+
+def collect_memory_notes(artifacts: list[dict], limit: int = 3) -> list[str]:
+    notes: list[str] = []
+    for artifact in artifacts:
+        note = str(artifact.get("memory_note") or "").strip()
+        if note and note not in notes:
+            notes.append(note)
+        if len(notes) >= limit:
+            break
+    return notes
+
+
+def collect_activity_fragments(entries: list[dict], limit: int = 3) -> list[str]:
+    fragments: list[str] = []
+    for entry in entries:
+        activity = str(entry.get("activity") or "").strip()
+        if activity and activity.lower() != "quick reflection" and activity not in fragments:
+            fragments.append(activity)
+        if len(fragments) >= limit:
+            break
+    return fragments
+
+
+def build_weekly_mirror_lines(entries: list[dict]) -> list[str]:
+    artifacts = collect_weekly_artifacts(entries)
+    memory_notes = collect_memory_notes(artifacts)
+    activities = collect_activity_fragments(entries)
+    repeated_words = collect_weekly_words(entries)
+
+    lines = ["Minggu ini sempat meninggalkan beberapa jejak kecil."]
+
+    if activities:
+        activities_text = ", ".join(activities[:2])
+        lines.append(f"Ada catatan tentang {activities_text}.")
+
+    if artifacts:
+        if len(artifacts) == 1:
+            lines.append("Ada satu foto yang ikut tersimpan.")
+        else:
+            lines.append("Ada beberapa foto yang ikut tersimpan.")
+
+    if memory_notes:
+        quoted_notes = " / ".join(f'"{note}"' for note in memory_notes[:2])
+        lines.append(f"Ada catatan kecil: {quoted_notes}.")
+
+    if repeated_words:
+        quoted_words = ", ".join(f'"{word}"' for word in repeated_words)
+        lines.append(f"Kata {quoted_words} sempat muncul lebih dari sekali.")
+
+    if len(lines) == 1:
+        lines.append("Tidak banyak yang perlu dipaksa menjadi cerita besar.")
+
+    lines.append("Tidak banyak yang perlu disimpulkan dari itu.")
+    lines.append("Tapi minggu ini sungguh terjadi.")
+    return lines
+
+
 def show_feedback_section() -> None:
     with st.sidebar.expander("Feedback untuk early version"):
         st.caption("Kalau ada bagian yang terasa janggal, terlalu ramai, atau kurang manusiawi, catat di sini dulu.")
@@ -1205,59 +1353,45 @@ def show_today_insight_page(reflection_style: str) -> None:
     show_pattern_noticing(entries)
 
 
-def show_weekly_reflection_page(reflection_style: str) -> None:
+def show_weekly_reflection_page() -> None:
     st.title("Cermin Mingguan")
-    st.caption("Bukan laporan. Hanya cara pelan untuk melihat minggu ini dengan sedikit jarak.")
+    st.caption("Bukan laporan. Hanya beberapa jejak dari minggu yang baru lewat.")
 
     entries = load_entries(st.session_state["user_id"])
     if not entries:
-        st.info("Belum ada cukup cerita untuk dipantulkan. Mulai dari satu kalimat jujur saja.")
+        st.info("Belum ada cukup catatan untuk dipantulkan. Satu kalimat jujur pun sudah bisa menjadi awal.")
         return
 
-    weekly_entries = entries[:7]
-    df = pd.DataFrame(weekly_entries)
-    mirror = generate_weekly_mirror(weekly_entries)
-
-    average_mood = df["mood_score"].mean()
-    average_energy = df["energy_score"].mean()
-    total_cost = df["cost"].sum()
-    total_activities = len(df)
-    area_counts = df["life_area"].fillna("Belum dicatat").replace("", "Belum dicatat").value_counts()
-    most_common_area = area_counts.index[0] if not area_counts.empty else "Belum dicatat"
-
-    themes_text = ", ".join(mirror["themes"]) if mirror["themes"] else "belum dominan"
+    weekly_entries = get_weekly_mirror_entries(entries)
+    mirror_lines = build_weekly_mirror_lines(weekly_entries)
+    mirror_html = "".join(f'<p class="mirror-row">{line}</p>' for line in mirror_lines)
     st.markdown(
         f"""
         <div class="mirror-card">
             <div class="meaning-kicker">Cermin Mingguan</div>
-            <div class="meaning-copy">{mirror["narrative"]}</div>
-            <div class="mirror-row"><strong>Tema minggu ini:</strong> {themes_text}</div>
-            <div class="mirror-row"><strong>Emosi dominan:</strong> {mirror["dominant_emotion"]}</div>
-            <div class="mirror-row"><strong>Area yang sering muncul:</strong> {most_common_area}</div>
-            <div class="mirror-row"><strong>Mood rata-rata:</strong> {average_mood:.1f}/10</div>
-            <div class="mirror-row"><strong>Energi rata-rata:</strong> {average_energy:.1f}/10</div>
-            <div class="meaning-small"><strong>Pertanyaan akhir minggu:</strong> {mirror["question"]}</div>
+            <div class="meaning-copy">{mirror_html}</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.divider()
-    st.subheader("Catatan kecil")
-    st.write(f"Minggu ini kamu menulis {total_activities} kali. Total biaya yang tercatat: {format_rupiah(float(total_cost))}.")
-    show_pattern_noticing(weekly_entries, "Pola yang pelan-pelan terlihat")
+    artifacts = collect_weekly_artifacts(weekly_entries)
+    if artifacts:
+        artifact = artifacts[0]
+        image_source = artifact.get("image_url") or artifact.get("image_path")
+        st.markdown("#### Yang ikut tersimpan")
+        if image_source:
+            st.image(image_source, width=180)
+        if artifact.get("memory_note"):
+            st.caption("Catatan kecil:")
+            st.write(artifact["memory_note"])
+        if artifact.get("side_note"):
+            st.caption(f"Catatan Pinggir: {artifact['side_note']}")
 
-    st.divider()
-    st.subheader("Bacaan singkat")
-    weekly_entry = {
-        "mood_score": round(float(average_mood)),
-        "energy_score": round(float(average_energy)),
-        "cost": float(total_cost),
-        "calories": int(df["calories"].sum() / max(total_activities, 1)),
-        "personal_reflection": " ".join(df["personal_reflection"].fillna("").astype(str).tolist()),
-        "gratitude_note": " ".join(df["gratitude_note"].fillna("").astype(str).tolist()),
-    }
-    st.write(generate_reflection(weekly_entry, reflection_style))
+    st.markdown(
+        '<p class="quiet-note">Kalau ada satu bagian dari minggu ini yang masih ingin disimpan pelan-pelan, biarkan ia tetap di sini dulu.</p>',
+        unsafe_allow_html=True,
+    )
 
 
 render_browser_identity_bridge()
@@ -1287,4 +1421,4 @@ elif page == "History":
 elif page == "Insight Hari Ini":
     show_today_insight_page(reflection_style)
 else:
-    show_weekly_reflection_page(reflection_style)
+    show_weekly_reflection_page()
