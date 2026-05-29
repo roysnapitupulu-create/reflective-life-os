@@ -6,6 +6,23 @@ from emotion_engine import extract_entry_emotions
 from time_utils import format_human_time
 
 
+def render_memory_artifacts(entry: dict[str, Any]) -> None:
+    artifacts = entry.get("memory_artifacts") or []
+    if not artifacts:
+        return
+
+    artifact = artifacts[0]
+    image_source = artifact.get("image_url") or artifact.get("image_path")
+    st.markdown("**Memory Artifact**")
+    if image_source:
+        st.image(image_source, width=220)
+    if artifact.get("memory_note"):
+        st.caption("Catatan kecil:")
+        st.write(artifact["memory_note"])
+    if artifact.get("side_note"):
+        st.caption(f"Catatan Pinggir: {artifact['side_note']}")
+
+
 def render_entry_card(entry: dict[str, Any]) -> None:
     written_time = format_human_time(
         entry.get("created_at"),
@@ -62,3 +79,5 @@ def render_entry_card(entry: dict[str, Any]) -> None:
         if entry.get("improvement_action"):
             st.markdown("**Untuk besok:**")
             st.write(entry["improvement_action"])
+
+        render_memory_artifacts(entry)

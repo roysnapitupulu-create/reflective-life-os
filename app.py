@@ -1,11 +1,21 @@
 from datetime import date
 import os
+from pathlib import Path
+import uuid
 
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from db import ensure_user_profile, get_entries, init_db, insert_entry, update_user_activity
+from db import (
+    ensure_user_profile,
+    get_entries,
+    get_memory_artifacts,
+    init_db,
+    insert_entry,
+    insert_memory_artifact,
+    update_user_activity,
+)
 from emotion_engine import extract_entry_emotions
 from identity_engine import (
     get_current_user_context,
@@ -14,13 +24,21 @@ from identity_engine import (
     utc_now_iso,
 )
 from meaning_engine import generate_meaning_response, generate_weekly_mirror, serialize_themes
+from memory_artifacts import choose_side_note, get_image_extension, validate_image_upload
 from memory_engine import detect_unfinished_thread
 from pattern_engine import analyze_recent_patterns
 from reflection_engine import generate_reflection
 from response_engine import generate_submit_response
-from storage_supabase import CloudStorageError, is_supabase_enabled, load_journal_entries, save_journal_entry
+from storage_supabase import (
+    CloudStorageError,
+    is_supabase_enabled,
+    load_journal_entries,
+    load_memory_artifacts,
+    save_journal_entry,
+    save_memory_artifact,
+)
 from time_utils import format_human_time
-from ui_components import render_entry_card
+from ui_components import render_entry_card, render_memory_artifacts
 from welcome_engine import generate_welcome
 
 
@@ -667,27 +685,114 @@ def make_entry(
     }
 
 
-def save_entry(entry: dict) -> None:
+def save_entry(entry: dict) -> dict:
     if is_supabase_enabled():
         try:
-            save_journal_entry(entry)
-            return
+            return save_journal_entry(entry)
         except CloudStorageError:
             st.error("Storage cloud belum bisa diakses.")
             st.stop()
 
-    insert_entry(**entry)
+    entry_id = insert_entry(**entry)
+    return {**entry, "id": entry_id}
+
+
+def attach_memory_artifacts(entries: list[dict], artifacts: list[dict]) -> list[dict]:
+    artifacts_by_entry_id: dict[str, list[dict]] = {}
+    for artifact in artifacts:
+        entry_id = str(artifact.get("journal_entry_id") or "")
+        if not entry_id:
+            continue
+        artifacts_by_entry_id.setdefault(entry_id, []).append(artifact)
+
+    enriched_entries: list[dict] = []
+    for entry in entries:
+        entry_id = str(entry.get("id") or "")
+        enriched_entries.append(
+            {
+                **entry,
+                "memory_artifacts": artifacts_by_entry_id.get(entry_id, []),
+            }
+        )
+    return enriched_entries
 
 
 def load_entries(user_id: str, limit: int = 100) -> list[dict]:
     if is_supabase_enabled():
         try:
-            return load_journal_entries(user_id, limit=limit)
+            entries = load_journal_entries(user_id, limit=limit)
         except CloudStorageError:
             st.error("Storage cloud belum bisa diakses.")
             return []
+        try:
+            artifacts = load_memory_artifacts(user_id)
+            return attach_memory_artifacts(entries, artifacts)
+        except CloudStorageError:
+            return entries
 
-    return get_entries(user_id)
+    return attach_memory_artifacts(get_entries(user_id), get_memory_artifacts(user_id))
+
+
+def save_local_memory_artifact(
+    user_id: str,
+    journal_entry_id: int,
+    uploaded_file,
+    memory_note: str,
+    side_note: str,
+) -> dict:
+    artifact_id = str(uuid.uuid4())
+    extension = get_image_extension(
+        getattr(uploaded_file, "name", ""),
+        getattr(uploaded_file, "type", ""),
+    )
+    artifact_dir = Path(__file__).parent / "data" / "memory_artifacts" / user_id / str(journal_entry_id)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    image_path = artifact_dir / f"{artifact_id}{extension}"
+    image_path.write_bytes(uploaded_file.getvalue())
+    return insert_memory_artifact(
+        user_id=user_id,
+        journal_entry_id=int(journal_entry_id),
+        image_path=str(image_path),
+        memory_note=memory_note.strip(),
+        side_note=side_note,
+        created_at=utc_now_iso(),
+        artifact_id=artifact_id,
+    )
+
+
+def save_entry_memory_artifact(
+    saved_entry: dict,
+    uploaded_file,
+    memory_note: str,
+    user_id: str,
+) -> dict | None:
+    if uploaded_file is None:
+        return None
+
+    entry_id = saved_entry.get("id")
+    if not entry_id:
+        raise CloudStorageError("Catatan tersimpan, tapi id catatan belum tersedia untuk foto.")
+
+    side_note = choose_side_note()
+    if is_supabase_enabled():
+        return save_memory_artifact(
+            user_id=user_id,
+            journal_entry_id=entry_id,
+            image_bytes=uploaded_file.getvalue(),
+            filename=getattr(uploaded_file, "name", ""),
+            content_type=getattr(uploaded_file, "type", "") or "image/jpeg",
+            memory_note=memory_note.strip(),
+            side_note=side_note,
+            created_at=utc_now_iso(),
+        )
+
+    return save_local_memory_artifact(
+        user_id=user_id,
+        journal_entry_id=int(entry_id),
+        uploaded_file=uploaded_file,
+        memory_note=memory_note,
+        side_note=side_note,
+    )
 
 
 def enrich_entry_with_meaning(entry: dict, recent_entries: list[dict], reflection_style: str) -> dict:
@@ -881,11 +986,33 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
         )
         st.markdown("</div>", unsafe_allow_html=True)
 
+        st.markdown(
+            '<div class="journey-section">'
+            '<div class="journey-section-title">Memory Artifact</div>'
+            '<div class="journey-section-copy">Jika suatu hari kamu melihat foto ini lagi, apa yang ingin kamu ingat?</div>',
+            unsafe_allow_html=True,
+        )
+        memory_photo = st.file_uploader(
+            "Upload 1 foto",
+            type=["jpg", "jpeg", "png", "webp"],
+            accept_multiple_files=False,
+        )
+        memory_note = st.text_area(
+            "Catatan kecil opsional",
+            placeholder="Satu kalimat kecil untuk dirimu nanti.",
+            height=100,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
         submitted = st.form_submit_button("Simpan & Renungkan")
 
     if submitted:
         if not activity.strip():
             st.error("Aktivitas utama perlu diisi.")
+            return
+        image_error = validate_image_upload(memory_photo)
+        if image_error:
+            st.error(image_error)
             return
 
         entry = make_entry(
@@ -904,18 +1031,36 @@ def show_full_journal_form(reflection_style: str, entries: list[dict], user_id: 
             user_id,
         )
         entry = enrich_entry_with_meaning(entry, entries, reflection_style)
-        save_entry(entry)
-        updated_entries = [entry] + entries
+        saved_entry = save_entry(entry)
+        artifact = None
+        if memory_photo is not None:
+            try:
+                artifact = save_entry_memory_artifact(
+                    saved_entry,
+                    memory_photo,
+                    memory_note,
+                    user_id,
+                )
+            except CloudStorageError:
+                st.warning("Catatan tersimpan. Foto belum berhasil disimpan, jadi kamu bisa mencoba lagi nanti.")
+
+        if artifact:
+            saved_entry = {**saved_entry, "memory_artifacts": [artifact]}
+        updated_entries = [saved_entry] + entries
         st.success("Catatan tersimpan.")
+        if artifact:
+            st.caption("Foto tersimpan bersama catatan ini.")
+            if artifact.get("side_note"):
+                st.caption(f"Catatan Pinggir: {artifact['side_note']}")
         st.markdown(
-            f'<div class="companion-response">{generate_submit_response(entry, updated_entries)}</div>',
+            f'<div class="companion-response">{generate_submit_response(saved_entry, updated_entries)}</div>',
             unsafe_allow_html=True,
         )
-        show_emotion_note(entry)
-        show_meaning_response(entry)
+        show_emotion_note(saved_entry)
+        show_meaning_response(saved_entry)
 
         with st.expander("Baca refleksi singkat"):
-            st.write(generate_reflection(entry, reflection_style))
+            st.write(generate_reflection(saved_entry, reflection_style))
 
 
 def show_quick_reflection_form(entries: list[dict], user_id: str) -> None:
@@ -1031,6 +1176,7 @@ def show_today_insight_page(reflection_style: str) -> None:
     )
     st.write(f"Biaya: {format_rupiah(float(latest_entry['cost'] or 0))}")
     show_emotion_note(latest_entry)
+    render_memory_artifacts(latest_entry)
 
     if latest_entry.get("improvement_action"):
         st.write(f"Aksi berikutnya: {latest_entry['improvement_action']}")

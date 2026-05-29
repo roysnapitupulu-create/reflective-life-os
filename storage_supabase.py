@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Any
+import uuid
 
 try:
     import streamlit as st
@@ -14,6 +15,8 @@ except Exception:
 
 
 TABLE_NAME = "journal_entries"
+MEMORY_ARTIFACTS_TABLE = "memory_artifacts"
+MEMORY_ARTIFACTS_BUCKET = "memory-artifacts"
 
 
 class CloudStorageError(Exception):
@@ -131,6 +134,105 @@ def save_journal_entry(entry: dict[str, Any]) -> dict[str, Any]:
 
     data = response.data or []
     return _from_supabase_row(data[0]) if data else entry
+
+
+def _signed_url_for_path(path: str) -> str:
+    if not path:
+        return ""
+    try:
+        response = _client().storage.from_(MEMORY_ARTIFACTS_BUCKET).create_signed_url(path, 60 * 60)
+    except Exception:
+        return ""
+
+    if isinstance(response, dict):
+        return str(response.get("signedURL") or response.get("signedUrl") or response.get("signed_url") or "")
+
+    data = getattr(response, "data", None)
+    if isinstance(data, dict):
+        return str(data.get("signedURL") or data.get("signedUrl") or data.get("signed_url") or "")
+    return str(getattr(response, "signed_url", "") or "")
+
+
+def _from_artifact_row(row: dict[str, Any]) -> dict[str, Any]:
+    image_path = row.get("image_path") or ""
+    return {
+        "id": row.get("id"),
+        "user_id": row.get("user_id"),
+        "journal_entry_id": row.get("journal_entry_id"),
+        "image_path": image_path,
+        "image_url": _signed_url_for_path(image_path),
+        "memory_note": row.get("memory_note") or "",
+        "side_note": row.get("side_note") or "",
+        "created_at": row.get("created_at") or "",
+    }
+
+
+def save_memory_artifact(
+    user_id: str,
+    journal_entry_id: Any,
+    image_bytes: bytes,
+    filename: str,
+    content_type: str,
+    memory_note: str,
+    side_note: str,
+    created_at: str,
+) -> dict[str, Any]:
+    artifact_id = str(uuid.uuid4())
+    extension = os.path.splitext(str(filename or ""))[1].lower() or ".jpg"
+    image_path = f"{user_id}/{journal_entry_id}/{artifact_id}{extension}"
+
+    try:
+        _client().storage.from_(MEMORY_ARTIFACTS_BUCKET).upload(
+            image_path,
+            image_bytes,
+            {"content-type": content_type or "image/jpeg", "upsert": "false"},
+        )
+        response = (
+            _client()
+            .table(MEMORY_ARTIFACTS_TABLE)
+            .insert(
+                {
+                    "id": artifact_id,
+                    "user_id": user_id,
+                    "journal_entry_id": journal_entry_id,
+                    "image_path": image_path,
+                    "memory_note": memory_note,
+                    "side_note": side_note,
+                    "created_at": created_at,
+                }
+            )
+            .execute()
+        )
+    except Exception as exc:
+        raise CloudStorageError("Foto belum bisa disimpan.") from exc
+
+    data = response.data or []
+    return _from_artifact_row(data[0]) if data else {
+        "id": artifact_id,
+        "user_id": user_id,
+        "journal_entry_id": journal_entry_id,
+        "image_path": image_path,
+        "image_url": _signed_url_for_path(image_path),
+        "memory_note": memory_note,
+        "side_note": side_note,
+        "created_at": created_at,
+    }
+
+
+def load_memory_artifacts(user_id: str) -> list[dict[str, Any]]:
+    try:
+        response = (
+            _client()
+            .table(MEMORY_ARTIFACTS_TABLE)
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+    except Exception as exc:
+        raise CloudStorageError("Memory artifact belum bisa dibaca.") from exc
+
+    return [_from_artifact_row(row) for row in response.data or []]
 
 
 def load_journal_entries(user_id: str, limit: int = 100) -> list[dict[str, Any]]:

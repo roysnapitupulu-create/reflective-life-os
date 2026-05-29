@@ -1,6 +1,7 @@
 from pathlib import Path
 import sqlite3
 from typing import Any
+import uuid
 
 
 DB_PATH = Path(__file__).parent / "data" / "journal.db"
@@ -51,6 +52,19 @@ def init_db() -> None:
                 last_active_at TEXT,
                 preferred_reflection_style TEXT,
                 total_entries INTEGER DEFAULT 0
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS memory_artifacts (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                journal_entry_id INTEGER,
+                image_path TEXT,
+                memory_note TEXT,
+                side_note TEXT,
+                created_at TEXT
             )
             """
         )
@@ -197,6 +211,53 @@ def insert_entry(
         return int(cursor.lastrowid)
 
 
+def insert_memory_artifact(
+    user_id: str,
+    journal_entry_id: int,
+    image_path: str,
+    memory_note: str,
+    side_note: str,
+    created_at: str,
+    artifact_id: str | None = None,
+) -> dict[str, Any]:
+    artifact_id = artifact_id or str(uuid.uuid4())
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO memory_artifacts (
+                id,
+                user_id,
+                journal_entry_id,
+                image_path,
+                memory_note,
+                side_note,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                artifact_id,
+                user_id,
+                int(journal_entry_id),
+                image_path,
+                memory_note,
+                side_note,
+                created_at,
+            ),
+        )
+        conn.commit()
+    return {
+        "id": artifact_id,
+        "user_id": user_id,
+        "journal_entry_id": int(journal_entry_id),
+        "image_path": image_path,
+        "image_url": image_path,
+        "memory_note": memory_note,
+        "side_note": side_note,
+        "created_at": created_at,
+    }
+
+
 def get_entries(user_id: str) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
@@ -209,6 +270,23 @@ def get_entries(user_id: str) -> list[dict[str, Any]]:
             (user_id,),
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_memory_artifacts(user_id: str) -> list[dict[str, Any]]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT *
+            FROM memory_artifacts
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    artifacts = [dict(row) for row in rows]
+    for artifact in artifacts:
+        artifact["image_url"] = artifact.get("image_path")
+    return artifacts
 
 
 def get_entry_by_id(entry_id: int, user_id: str) -> dict[str, Any] | None:
