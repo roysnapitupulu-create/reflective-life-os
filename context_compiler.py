@@ -1,95 +1,179 @@
-from meaning_synthesizer import synthesize_side_note
+# context_compiler.py
+
 from typing import Any
 
-from emotion_engine import extract_emotions_from_text
-from meaning_engine import detect_reflection_themes
+from scene_extractor import extract_scene
+from symbol_taxonomy import contains_any, detect_symbols
 
 
-TIME_KEYWORDS = {
-    "pagi": ["pagi", "subuh", "sarapan", "bubur", "kopi pagi"],
-    "siang": ["siang", "makan siang"],
-    "sore": ["sore", "senja"],
-    "malam": ["malam", "tidur", "hening"],
-}
+HEAT_KEYWORDS = [
+    "terik",
+    "panas",
+    "sengatan",
+    "siang yang buas",
+    "matahari",
+    "gerah",
+]
+
+URGENCY_KEYWORDS = [
+    "berburu waktu",
+    "mengejar",
+    "tergesa",
+    "diburu",
+    "cepat",
+    "kejar",
+    "deadline",
+]
+
+GRATITUDE_KEYWORDS = [
+    "syukur",
+    "bersyukur",
+    "terima kasih",
+    "berterima kasih",
+    "lega",
+    "cukup",
+]
+
+SLOW_PACE_KEYWORDS = [
+    "pelan",
+    "perlahan",
+    "diam",
+    "hening",
+    "teduh",
+    "menunggu",
+    "rehat",
+]
 
 SIMPLE_LIFE_KEYWORDS = [
-    "bubur", "kopi", "makan", "jalan", "rumah", "hujan",
-    "pagi", "pelan", "sederhana", "sehari-hari"
+    "warung",
+    "kopi",
+    "teras",
+    "jalanan",
+    "angkot",
+    "ojol",
+    "gerobak",
+    "halte",
+    "lampu merah",
+    "pohon",
+    "hujan",
+    "rumah",
+    "dapur",
 ]
 
-SPIRITUAL_KEYWORDS = [
-    "tuhan", "doa", "syukur", "ibadah", "kebaktian",
-    "gereja", "umat", "iman", "berkat"
-]
+MORNING_KEYWORDS = ["pagi", "subuh"]
+NOON_KEYWORDS = ["siang", "tengah hari"]
+EVENING_KEYWORDS = ["sore", "senja", "petang"]
+NIGHT_KEYWORDS = ["malam", "larut"]
 
 
-def _contains_any(text: str, keywords: list[str]) -> bool:
-    normalized = str(text or "").lower()
-    return any(keyword in normalized for keyword in keywords)
+def _entry_text(entry: dict[str, Any]) -> str:
+    return " ".join(
+        [
+            str(entry.get("activity") or ""),
+            str(entry.get("personal_reflection") or ""),
+            str(entry.get("gratitude_note") or ""),
+            str(entry.get("improvement_action") or ""),
+        ]
+    ).strip()
 
 
-def _detect_time_context(text: str) -> str:
-    normalized = str(text or "").lower()
-    for time_name, keywords in TIME_KEYWORDS.items():
-        if any(keyword in normalized for keyword in keywords):
-            return time_name
-    return ""
+def _artifact_text(artifact: dict[str, Any] | None) -> str:
+    if not artifact:
+        return ""
+
+    return " ".join(
+        [
+            str(artifact.get("memory_note") or ""),
+            str(artifact.get("side_note") or ""),
+        ]
+    ).strip()
 
 
-def compile_daily_context(entry: dict[str, Any], artifact: dict[str, Any] | None = None) -> dict[str, Any]:
-    artifact = artifact or {}
+def compile_context(text: str) -> dict[str, Any]:
+    text = str(text or "")
+    text_lower = text.lower()
 
-    reflection = str(entry.get("personal_reflection") or "")
-    gratitude = str(entry.get("gratitude_note") or "")
-    tomorrow = str(entry.get("improvement_action") or "")
-    activity = str(entry.get("activity") or "")
-    memory_note = str(artifact.get("memory_note") or "")
+    themes, symbols = detect_symbols(text_lower)
+    emotions: list[str] = []
 
-    combined_text = " ".join([activity, reflection, gratitude, tomorrow, memory_note]).strip()
+    time_context = None
 
-    themes = detect_reflection_themes(combined_text)
-    emotions = extract_emotions_from_text(combined_text)
+    if contains_any(text_lower, HEAT_KEYWORDS):
+        emotions.append("adversity")
+
+    if contains_any(text_lower, URGENCY_KEYWORDS):
+        emotions.append("urgency")
+
+    has_gratitude = contains_any(text_lower, GRATITUDE_KEYWORDS)
+    if has_gratitude:
+        emotions.append("gratitude")
+
+    has_slow_pace = contains_any(text_lower, SLOW_PACE_KEYWORDS)
+    is_simple_life = contains_any(text_lower, SIMPLE_LIFE_KEYWORDS)
+    is_spiritual = "spiritual" in themes
+
+    if contains_any(text_lower, MORNING_KEYWORDS):
+        time_context = "pagi"
+    elif contains_any(text_lower, NOON_KEYWORDS):
+        time_context = "siang"
+    elif contains_any(text_lower, EVENING_KEYWORDS):
+        time_context = "senja"
+    elif contains_any(text_lower, NIGHT_KEYWORDS):
+        time_context = "malam"
+
+    unique_themes = list(dict.fromkeys(themes))
+    unique_symbols = list(dict.fromkeys(symbols))
+    unique_emotions = list(dict.fromkeys(emotions))
+
+    scene = extract_scene(
+        text_lower,
+        {
+            "themes": unique_themes,
+            "symbols": unique_symbols,
+            "emotions": unique_emotions,
+            "time_context": time_context,
+        },
+    )
 
     return {
-        "raw_text": combined_text,
-        "themes": themes,
-        "emotions": emotions,
-        "time_context": _detect_time_context(combined_text),
-        "is_spiritual": _contains_any(combined_text, SPIRITUAL_KEYWORDS),
-        "is_simple_life": _contains_any(combined_text, SIMPLE_LIFE_KEYWORDS),
-        "has_gratitude": "gratitude" in themes or _contains_any(combined_text, ["syukur", "bersyukur"]),
-        "has_slow_pace": _contains_any(combined_text, ["pelan", "tidak tergesa", "tanpa tergesa", "perlahan"]),
+        "raw_text": text,
+        "themes": unique_themes,
+        "symbols": unique_symbols,
+        "emotions": unique_emotions,
+        "time_context": time_context,
+        "is_spiritual": is_spiritual,
+        "is_simple_life": is_simple_life,
+        "has_gratitude": has_gratitude,
+        "has_slow_pace": has_slow_pace,
+        "scene": scene,
     }
+
+
+def compile_daily_context(
+    entry: dict[str, Any],
+    artifact: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    text = " ".join(
+        [
+            _entry_text(entry),
+            _artifact_text(artifact),
+        ]
+    ).strip()
+
+    return compile_context(text)
 
 
 def generate_contextual_side_note(context: dict[str, Any]) -> str:
     try:
-        return synthesize_side_note(context)
+        from meaning_synthesizer import synthesize_meaning_v2
+
+        meaning = synthesize_meaning_v2(context)
+        side_note = str(meaning.get("side_note") or "").strip()
+
+        if side_note:
+            return side_note
+
     except Exception:
         pass
 
-    time_context = context.get("time_context")
-    is_spiritual = context.get("is_spiritual")
-    is_simple_life = context.get("is_simple_life")
-    has_gratitude = context.get("has_gratitude")
-    has_slow_pace = context.get("has_slow_pace")
-
-    if time_context == "pagi" and is_spiritual and has_slow_pace:
-        return "Pagi tidak selalu meminta kita bergegas. Kadang ia hanya mengajak kita hadir dengan lebih utuh."
-
-    if time_context == "pagi" and is_simple_life and has_gratitude:
-        return "Hal-hal sederhana sering menjadi tempat pertama rasa syukur belajar bernapas."
-
-    if is_spiritual and has_gratitude:
-        return "Syukur tidak selalu datang setelah semuanya selesai; kadang ia justru menjaga hati saat proses masih berjalan."
-
-    if has_slow_pace:
-        return "Tidak semua perjalanan harus dipercepat. Ada hidup yang justru pulih ketika dijalani pelan-pelan."
-
-    if is_simple_life:
-        return "Yang biasa-biasa saja kadang menyimpan cara paling jujur untuk merasa hidup."
-
-    if has_gratitude:
-        return "Di antara banyak hal yang belum selesai, satu rasa syukur kecil tetap layak diberi tempat."
-
-    return "Ada hari yang tidak perlu segera disimpulkan. Cukup dicatat, lalu dibiarkan berbicara perlahan."
+    return "Ada hal kecil yang tidak perlu langsung dijelaskan. Cukup disimpan sebagai tanda bahwa hari ini pernah hadir."

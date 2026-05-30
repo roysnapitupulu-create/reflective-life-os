@@ -1,185 +1,137 @@
-from typing import Any
+# life_observation_library.py
+from __future__ import annotations
 
-from meaning_modifiers import first_modifier_key
+import random
 
 
-LIFE_OBSERVATION_LIBRARY: dict[str, dict[str, Any]] = {
+LIFE_OBSERVATION_LIBRARY = {
     "tree": {
-        "signals": ["pohon", "daun", "akar", "rindang", "teduh", "keteduhan"],
-        "symbols": ["keteduhan", "ketahanan", "pertumbuhan"],
         "reflective": [
-            "Keteduhan tidak selalu lahir dari tempat yang teduh. Kadang ia datang dari sesuatu yang tetap berdiri di bawah terik.",
+            "Pohon tidak pernah terburu-buru menjadi besar. Ia hanya setia tumbuh, sedikit demi sedikit, bahkan ketika tidak ada yang memperhatikan.",
+            "Keteduhan sering datang dari sesuatu yang diam, berakar, dan tidak banyak menjelaskan dirinya.",
+            "Pohon mengajarkan bahwa kekuatan tidak selalu perlu bergerak cepat. Kadang ia cukup berdiri, memberi ruang bagi yang lelah.",
         ],
         "micro_wonder": [
-            "Pohon tidak menghentikan matahari. Ia hanya membuat dunia sedikit lebih ramah di bawahnya.",
+            "Kadang satu pohon cukup untuk membuat siang terasa tidak sepenuhnya keras.",
+            "Daun-daun kecil bisa menjadi cara bumi berbisik bahwa dunia belum seluruhnya kasar.",
         ],
         "gentle_humor": [
-            "Pohon ini tampaknya sudah cukup lama hidup untuk tahu bahwa tidak semua musim perlu ditanggapi dengan panik.",
+            "Pohon itu mungkin tidak pernah ikut seminar produktivitas, tapi ia tahu cara bertumbuh tanpa panik.",
+            "Kalau pohon bisa bicara, mungkin ia cuma bilang: pelan-pelan saja, yang penting tetap berakar.",
         ],
         "philosophical_humor": [
-            "Pohon ini tampaknya tidak terlalu memikirkan determinisme. Ia memilih tumbuh saja, lalu membiarkan para filsuf berdebat di bawah keteduhannya.",
-        ],
-    },
-    "street_food": {
-        "signals": ["gerobak", "bubur", "sarapan", "pedagang", "pembeli", "warung"],
-        "symbols": ["kesederhanaan", "nafkah", "ritme pagi"],
-        "reflective": [
-            "Kesederhanaan sering memulai hari lebih awal daripada yang kita sadari.",
-        ],
-        "micro_wonder": [
-            "Sebelum kota benar-benar sibuk, ada orang-orang yang sudah menyiapkan sarapan untuknya.",
-        ],
-        "gentle_humor": [
-            "Gerobak bubur punya kemampuan membuat orang yang tadinya tidak lapar mulai mempertimbangkan ulang hidupnya.",
-        ],
-        "philosophical_humor": [
-            "Kalau Socrates lahir di gang kecil, mungkin ia akan mulai dialognya dari semangkuk bubur.",
-        ],
-    },
-    "coffee": {
-        "signals": ["kopi", "cangkir", "ngopi", "espresso", "americano"],
-        "symbols": ["jeda", "ritual", "percakapan"],
-        "reflective": [
-            "Kadang secangkir kopi bukan soal kafein, tetapi cara kecil untuk kembali hadir.",
-        ],
-        "micro_wonder": [
-            "Kopi punya cara sederhana membuat waktu terasa punya pegangan.",
-        ],
-        "gentle_humor": [
-            "Kopi sering terlihat seperti minuman, padahal kadang ia adalah tombol restart yang menyamar.",
-        ],
-        "philosophical_humor": [
-            "Descartes mungkin berkata: aku berpikir, maka aku butuh kopi dulu.",
-        ],
-    },
-    "rain": {
-        "signals": ["hujan", "gerimis", "rinai", "basah", "payung"],
-        "symbols": ["jeda", "pemulihan", "pembersihan"],
-        "reflective": [
-            "Hujan kadang tidak menyelesaikan apa-apa. Ia hanya memberi dunia alasan untuk melambat.",
-        ],
-        "micro_wonder": [
-            "Ada suara-suara kecil dari langit yang membuat hari terasa lebih pelan.",
-        ],
-        "gentle_humor": [
-            "Hujan punya bakat membuat rencana manusia terlihat terlalu percaya diri.",
-        ],
-        "philosophical_humor": [
-            "Camus mungkin tetap mendorong batunya. Tapi kalau hujan begini, ia mungkin membawa payung cadangan.",
+            "Pohon tidak punya kalender target tahunan, tapi anehnya ia tetap berhasil menjadi dirinya sendiri.",
+            "Manusia sering sibuk mencari makna hidup, sementara pohon sudah lama mempraktikkannya: diam, tumbuh, memberi teduh.",
         ],
     },
     "thinkpad": {
-        "signals": ["thinkpad", "laptop", "keyboard", "terminal", "kode", "coding"],
-        "symbols": ["kerja sunyi", "ketekunan", "alat berpikir"],
         "reflective": [
-            "Ada pekerjaan yang tidak terlihat ramai, tetapi tetap meninggalkan jejak.",
+            "ThinkPad tua kadang seperti saksi sunyi dari pikiran yang belum selesai, pekerjaan yang bertumpuk, dan kesetiaan kecil pada alat yang masih bisa diandalkan.",
+            "Ada benda-benda yang tidak sekadar dipakai. Ia ikut menyimpan ritme hidup, jejak kerja, dan percakapan panjang dengan diri sendiri.",
         ],
         "micro_wonder": [
-            "Keyboard ini mungkin sudah menyimpan lebih banyak cerita daripada yang terlihat di layar.",
+            "Di balik tombol keyboard yang mulai aus, ada banyak hari yang pernah diselesaikan pelan-pelan.",
+            "Kadang benda sederhana terasa hidup karena terlalu sering menemani manusia berpikir.",
         ],
         "gentle_humor": [
-            "ThinkPad selalu terlihat seperti sedang mengerjakan sesuatu yang penting, bahkan ketika sebenarnya cuma membuka playlist lagu galau.",
+            "ThinkPad itu seperti kawan lama: tampilannya tidak sok cantik, tapi kalau diajak kerja masih tahu diri.",
+            "Ada laptop yang ingin terlihat mewah. Ada ThinkPad yang hanya ingin menyelesaikan pekerjaan.",
         ],
         "philosophical_humor": [
-            "Descartes mungkin berkata aku berpikir maka aku ada. ThinkPad ini menjawab: aku panas, maka aku bekerja.",
+            "ThinkPad mungkin tidak menjanjikan keindahan, tapi ia menawarkan sesuatu yang lebih langka: ketahanan tanpa banyak drama.",
+            "Di zaman perangkat ingin tampak seperti perhiasan, ThinkPad tetap seperti palu: tidak genit, tapi berguna.",
         ],
     },
-    "cable": {
-        "signals": ["kabel", "charger", "colokan", "adapter"],
-        "symbols": ["koneksi", "ketergantungan kecil", "kekusutan"],
+    "urban_survival": {
         "reflective": [
-            "Kadang hal kecil yang menghubungkan justru paling mudah diabaikan.",
+            "Di jalanan, waktu bukan sekadar jam. Ia bisa berubah menjadi kesempatan yang harus segera ditangkap sebelum lewat.",
+            "Ada orang-orang yang tidak sedang mengejar kemenangan besar. Mereka hanya sedang memastikan hari ini cukup untuk dilanjutkan sampai besok.",
+            "Angkot yang mengejar penumpang kadang terlihat seperti kendaraan biasa, padahal ia sedang membawa kecemasan kecil tentang dapur, waktu, dan bertahan hidup.",
         ],
         "micro_wonder": [
-            "Kabel tampak diam, padahal tugasnya membawa tenaga dari satu tempat ke tempat lain.",
+            "Kadang kota menyimpan puisinya bukan di taman, tapi di kaca depan angkot yang berdebu.",
+            "Di balik klakson dan panas jalanan, ada manusia yang sedang berdamai dengan kerasnya hari.",
         ],
         "gentle_humor": [
-            "Kabel selalu punya bakat menemukan cara baru untuk saling merindukan.",
+            "Angkot itu seperti filsuf jalanan: tidak banyak teori, tapi tahu bahwa hidup harus tetap jalan walau panas.",
+            "Survival of the fittest versi kota kadang sederhana: siapa cepat dapat penumpang, siapa sabar dapat cerita.",
         ],
         "philosophical_humor": [
-            "Socrates mungkin akan bertanya apa itu keterhubungan. Kabel ini memilih menjawab dengan kusut.",
+            "Darwin mungkin tidak membayangkan teorinya akan ikut naik angkot di siang bolong.",
+            "Di jalanan kota, evolusi kadang berbentuk sopir yang hafal kapan harus ngebut, kapan harus sabar, dan kapan harus pura-pura tidak mendengar klakson.",
+        ],
+    },
+    "spiritual": {
+        "reflective": [
+            "Kadang iman tidak datang sebagai jawaban besar, melainkan sebagai ruang kecil untuk tetap bernapas di tengah hal yang belum selesai.",
+            "Kehadiran Tuhan tidak selalu menghapus pergumulan. Kadang Ia membuat hati cukup kuat untuk tinggal sebentar di dalamnya.",
+        ],
+        "micro_wonder": [
+            "Ada doa yang tidak mengubah keadaan seketika, tapi mengubah cara hati menatap keadaan itu.",
+            "Kadang yang paling menenangkan bukan masalah yang selesai, melainkan rasa bahwa kita tidak sendirian menjalaninya.",
+        ],
+        "gentle_humor": [
+            "Tuhan kadang tidak menjawab secepat notifikasi, tapi anehnya hati tetap bisa dibuat tenang.",
+            "Doa itu bukan tombol darurat semata. Kadang ia seperti kursi kecil untuk duduk sebentar di tengah ributnya hidup.",
+        ],
+        "philosophical_humor": [
+            "Manusia ingin jawaban final. Tuhan sering memberi cukup terang untuk satu langkah dulu.",
+            "Mungkin iman adalah seni berjalan tanpa seluruh peta, tapi dengan keyakinan bahwa jalan tidak sedang kosong.",
         ],
     },
 }
 
 
-PHILOSOPHY_SIGNALS = [
-    "eksistensi",
-    "eksistensial",
-    "absurd",
-    "makna",
-    "socrates",
-    "descartes",
-    "camus",
-    "nietzsche",
-    "kierkegaard",
-    "filsafat",
-    "sisyphus",
-]
+TEXT_SYMBOL_KEYWORDS = {
+    "tree": ["pohon", "mangga", "keteduhan", "teduh", "daun", "akar"],
+    "thinkpad": ["thinkpad", "laptop", "keyboard", "layar", "komputer"],
+    "urban_survival": [
+        "angkot", "mobil angkot", "penumpang", "terminal", "halte",
+        "ojek", "ojol", "pedagang", "warung", "gerobak",
+        "berburu waktu", "mengejar", "survival", "fittest",
+        "nafkah", "rezeki", "jalanan",
+    ],
+    "spiritual": ["tuhan", "doa", "iman", "rahmat", "syukur", "gereja", "masjid", "berkat", "kasih"],
+}
 
 
-def detect_observation_symbols(text: str) -> list[dict[str, Any]]:
-    normalized = str(text or "").lower()
-    matches: list[dict[str, Any]] = []
+def get_observations(symbol: str, voice: str = "reflective") -> list[str]:
+    symbol_pack = LIFE_OBSERVATION_LIBRARY.get(symbol)
 
-    for key, item in LIFE_OBSERVATION_LIBRARY.items():
-        score = sum(1 for signal in item["signals"] if signal in normalized)
-        if score:
-            matches.append({"key": key, "score": score, **item})
+    if not symbol_pack:
+        return []
 
-    return sorted(matches, key=lambda item: item["score"], reverse=True)
+    return symbol_pack.get(voice) or symbol_pack.get("reflective", [])
 
 
-def detect_voice_register(text: str) -> str:
+def detect_symbol_from_text(text: str) -> str | None:
     normalized = str(text or "").lower()
 
-    if any(signal in normalized for signal in PHILOSOPHY_SIGNALS):
-        return "philosophical_humor"
+    for symbol, keywords in TEXT_SYMBOL_KEYWORDS.items():
+        if any(keyword in normalized for keyword in keywords):
+            return symbol
 
-    if any(word in normalized for word in ["wkwk", "haha", "lucu", "receh", "nyengir"]):
-        return "gentle_humor"
-
-    if any(word in normalized for word in ["syukur", "tuhan", "doa", "ibadah", "gereja", "iman"]):
-        return "reflective"
-
-    return "micro_wonder"
+    return None
 
 
-def _pick_default_observation(symbol: dict[str, Any], voice: str) -> str:
-    candidates = (
-        symbol.get(voice)
-        or symbol.get("micro_wonder")
-        or symbol.get("reflective")
-        or []
-    )
-    return candidates[0] if candidates else ""
-
-
-def pick_life_observation(text: str) -> str:
-    symbols = detect_observation_symbols(text)
-    if not symbols:
+def pick_life_observation(text: str, voice: str = "reflective") -> str:
+    """Backward-compatible function expected by meaning_synthesizer.py."""
+    symbol = detect_symbol_from_text(text)
+    if not symbol:
         return ""
 
-    voice = detect_voice_register(text)
-    symbol = symbols[0]
-    modifier = first_modifier_key(text)
+    observations = get_observations(symbol, voice=voice)
+    if not observations:
+        return ""
 
-    if symbol["key"] == "tree" and modifier == "adversity":
-        if voice == "philosophical_humor":
-            return (
-                "Pohon ini tidak menghentikan terik. "
-                "Ia hanya memilih tetap memberi keteduhan sambil membiarkan matahari dan para filsuf berdebat."
-            )
+    seed = sum(ord(char) for char in str(text or ""))
+    return observations[seed % len(observations)]
 
-        if voice == "gentle_humor":
-            return (
-                "Terik tampaknya datang dengan penuh percaya diri hari ini. "
-                "Untung pohon ini tidak ikut panik."
-            )
+def pick_life_observation(symbol: str, voice: str = "reflective") -> str:
+    observations = get_observations(symbol, voice)
 
-        return (
-            "Keteduhan terasa paling berarti bukan ketika cuaca sedang baik-baik saja, "
-            "tetapi ketika terik sedang menunjukkan seluruh kekuatannya."
-        )
+    if not observations:
+        return ""
 
-    return _pick_default_observation(symbol, voice)
+    seed = sum(ord(char) for char in f"{symbol}:{voice}") % len(observations)
+    return observations[seed]

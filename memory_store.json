@@ -1,0 +1,65 @@
+[
+  {
+    "raw_text": "Warung kecil masih buka ketika malam mulai turun.",
+    "themes": [
+      "urban_survival"
+    ],
+    "symbols": [
+      "warung"
+    ],
+    "scene": {
+      "actors": [],
+      "actions": [],
+      "settings": [
+        "warung",
+        "malam"
+      ],
+      "objects": [],
+      "supporting_symbols": []
+    },
+    "emotions": [],
+    "time_context": "malam"
+  },
+  {
+    "raw_text": "Warung kecil masih buka ketika malam mulai turun.",
+    "themes": [
+      "urban_survival"
+    ],
+    "symbols": [
+      "warung"
+    ],
+    "scene": {
+      "actors": [],
+      "actions": [],
+      "settings": [
+        "warung",
+        "malam"
+      ],
+      "objects": [],
+      "supporting_symbols": []
+    },
+    "emotions": [],
+    "time_context": "malam"
+  },
+  {
+    "raw_text": "Warung kecil masih buka ketika malam mulai turun.",
+    "themes": [
+      "urban_survival"
+    ],
+    "symbols": [
+      "warung"
+    ],
+    "scene": {
+      "actors": [],
+      "actions": [],
+      "settings": [
+        "warung",
+        "malam"
+      ],
+      "objects": [],
+      "supporting_symbols": []
+    },
+    "emotions": [],
+    "time_context": "malam"
+  }
+]

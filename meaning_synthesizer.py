@@ -1,23 +1,62 @@
+# meaning_synthesizer.py
+
 from typing import Any
 
 from life_observation_library import pick_life_observation
+from meaning_modifiers import apply_meaning_modifiers
+from scene_composer import compose_scene_observation
+from voice_selector import select_voice
+
+
+THEME_TITLES = {
+    "tree": "Keteduhan dan Ketahanan",
+    "thinkpad": "Kesetiaan Benda Kecil",
+    "urban_survival": "Catatan dari Jalanan",
+    "spiritual": "Ruang Batin",
+}
 
 
 def _raw(context: dict[str, Any]) -> str:
     return str(context.get("raw_text") or "").lower()
 
 
-def synthesize_meaning_v2(context: dict[str, Any]) -> dict[str, str]:
-    text = _raw(context)
+def _first_theme(context: dict[str, Any]) -> str:
+    themes = context.get("themes") or []
+    if not themes:
+        return ""
+    return str(themes[0])
 
-    observation = pick_life_observation(text)
-    if observation:
+
+def synthesize_meaning_v2(context: dict[str, Any]) -> dict[str, str]:
+    symbol = _first_theme(context)
+
+    scene_observation = compose_scene_observation(context)
+    if scene_observation:
+        voice = select_voice(symbol, context) if symbol else "reflective"
+
         return {
-            "theme": "Life Observation",
-            "observation": observation,
-            "side_note": observation,
+            "theme": THEME_TITLES.get(symbol, "Life Observation"),
+            "observation": scene_observation,
+            "side_note": scene_observation,
             "reflection_question": "",
+            "voice": voice,
         }
+
+    if symbol:
+        voice = select_voice(symbol, context)
+        observation = pick_life_observation(symbol, voice)
+        observation = apply_meaning_modifiers(symbol, observation, context)
+
+        if observation:
+            return {
+                "theme": THEME_TITLES.get(symbol, "Life Observation"),
+                "observation": observation,
+                "side_note": observation,
+                "reflection_question": "",
+                "voice": voice,
+            }
+
+    text = _raw(context)
 
     has_morning = context.get("time_context") == "pagi"
     has_spiritual = bool(context.get("is_spiritual"))
@@ -68,10 +107,10 @@ def synthesize_meaning_v2(context: dict[str, Any]) -> dict[str, str]:
 
     if has_simple and has_slow:
         return {
-            "theme": "Kesederhanaan",
-            "observation": "Hal-hal yang sederhana tampaknya sedang membawa makna yang lebih besar dari biasanya.",
-            "side_note": "Kesederhanaan hari ini tampaknya sedang mengajari satu hal: hidup tidak harus tergesa untuk terasa penuh.",
-            "reflection_question": "Hal sederhana apa yang paling membekas hari ini?",
+            "theme": "Kesederhanaan yang Menenangkan",
+            "observation": "Ada ritme sederhana yang terasa pelan dalam catatan ini.",
+            "side_note": "Hal-hal kecil kadang tidak meminta perhatian besar. Tapi justru di sana hidup terasa lebih bisa dihuni.",
+            "reflection_question": "Hal sederhana apa yang ingin kamu beri ruang lagi besok?",
         }
 
     return {
@@ -80,11 +119,3 @@ def synthesize_meaning_v2(context: dict[str, Any]) -> dict[str, str]:
         "side_note": "Ada hal kecil yang tidak perlu langsung dijelaskan. Cukup disimpan sebagai tanda bahwa hari ini pernah hadir.",
         "reflection_question": "Apa bagian hari ini yang belum sempat kamu dengarkan?",
     }
-
-
-def synthesize_meaning(context: dict[str, Any]) -> str:
-    return synthesize_meaning_v2(context)["side_note"]
-
-
-def synthesize_side_note(context: dict[str, Any]) -> str:
-    return synthesize_meaning_v2(context)["side_note"]
