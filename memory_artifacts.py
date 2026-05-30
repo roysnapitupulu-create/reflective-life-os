@@ -491,13 +491,46 @@ def _matching_categories(context: str) -> list[str]:
 
 
 def choose_side_note(memory_note: str = "", filename: str = "", journal_text: str = "") -> str:
-    context = f"{memory_note} {filename} {journal_text}".strip()
-    matches = _matching_categories(context)
+    """
+    Generate a side note for a memory artifact.
+
+    Priority:
+    1. Use the contextual soul compiler when memory/journal text is available.
+    2. Fall back to the old object/category library, but avoid pure trivia/fakta.
+    3. Fall back to a gentle generic reflective line.
+
+    This prevents mismatched notes such as a spreadsheet fact appearing under
+    a reflective morning/bubur ayam memory.
+    """
+    context_text = f"{memory_note} {journal_text}".strip()
+
+    if context_text:
+        try:
+            from context_compiler import compile_daily_context, generate_contextual_side_note
+
+            pseudo_entry = {
+                "activity": "",
+                "personal_reflection": journal_text or "",
+                "gratitude_note": "",
+                "improvement_action": "",
+            }
+            pseudo_artifact = {"memory_note": memory_note or ""}
+            compiled_context = compile_daily_context(pseudo_entry, pseudo_artifact)
+            contextual_note = generate_contextual_side_note(compiled_context)
+            if contextual_note:
+                return contextual_note
+        except Exception:
+            # Keep artifact saving resilient. If the compiler fails, use safe fallback.
+            pass
+
+    fallback_context = f"{memory_note} {filename} {journal_text}".strip()
+    matches = _matching_categories(fallback_context)
     if matches:
         category = random.choice(matches)
-        style = random.choice(["micro_wonder", "genit_bermartabat", "fakta"])
+        style = random.choice(["micro_wonder", "genit_bermartabat"])
         return random.choice(SIDE_NOTE_LIBRARY[category][style])
-    return random.choice(SIDE_NOTES)
+
+    return "Ada hal kecil yang tidak perlu langsung dijelaskan. Cukup disimpan sebagai tanda bahwa hari ini pernah hadir."
 
 
 def get_image_extension(filename: str, mime_type: str = "") -> str:
@@ -532,3 +565,4 @@ def validate_image_upload(uploaded_file: Any) -> str | None:
         return "Ukuran foto maksimal 10 MB untuk versi awal ini."
 
     return None
+
