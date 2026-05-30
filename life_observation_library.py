@@ -1,5 +1,7 @@
 from typing import Any
 
+from meaning_modifiers import first_modifier_key
+
 
 LIFE_OBSERVATION_LIBRARY: dict[str, dict[str, Any]] = {
     "tree": {
@@ -102,14 +104,23 @@ LIFE_OBSERVATION_LIBRARY: dict[str, dict[str, Any]] = {
 
 
 PHILOSOPHY_SIGNALS = [
-    "eksistensi", "eksistensial", "absurd", "makna", "socrates",
-    "descartes", "camus", "nietzsche", "kierkegaard", "filsafat",
+    "eksistensi",
+    "eksistensial",
+    "absurd",
+    "makna",
+    "socrates",
+    "descartes",
+    "camus",
+    "nietzsche",
+    "kierkegaard",
+    "filsafat",
+    "sisyphus",
 ]
 
 
 def detect_observation_symbols(text: str) -> list[dict[str, Any]]:
     normalized = str(text or "").lower()
-    matches = []
+    matches: list[dict[str, Any]] = []
 
     for key, item in LIFE_OBSERVATION_LIBRARY.items():
         score = sum(1 for signal in item["signals"] if signal in normalized)
@@ -134,6 +145,16 @@ def detect_voice_register(text: str) -> str:
     return "micro_wonder"
 
 
+def _pick_default_observation(symbol: dict[str, Any], voice: str) -> str:
+    candidates = (
+        symbol.get(voice)
+        or symbol.get("micro_wonder")
+        or symbol.get("reflective")
+        or []
+    )
+    return candidates[0] if candidates else ""
+
+
 def pick_life_observation(text: str) -> str:
     symbols = detect_observation_symbols(text)
     if not symbols:
@@ -141,6 +162,24 @@ def pick_life_observation(text: str) -> str:
 
     voice = detect_voice_register(text)
     symbol = symbols[0]
+    modifier = first_modifier_key(text)
 
-    candidates = symbol.get(voice) or symbol.get("micro_wonder") or symbol.get("reflective") or []
-    return candidates[0] if candidates else ""
+    if symbol["key"] == "tree" and modifier == "adversity":
+        if voice == "philosophical_humor":
+            return (
+                "Pohon ini tidak menghentikan terik. "
+                "Ia hanya memilih tetap memberi keteduhan sambil membiarkan matahari dan para filsuf berdebat."
+            )
+
+        if voice == "gentle_humor":
+            return (
+                "Terik tampaknya datang dengan penuh percaya diri hari ini. "
+                "Untung pohon ini tidak ikut panik."
+            )
+
+        return (
+            "Keteduhan terasa paling berarti bukan ketika cuaca sedang baik-baik saja, "
+            "tetapi ketika terik sedang menunjukkan seluruh kekuatannya."
+        )
+
+    return _pick_default_observation(symbol, voice)
